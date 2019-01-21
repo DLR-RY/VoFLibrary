@@ -1,0 +1,54 @@
+#set terminal pngcairo size 800,640 font 'Arial,18'
+#set output "Recon-Circle-hexIsoVsRDF.png"
+set terminal postscript eps enhanced color  font'Arial,22'
+set output "advectDisc-ResCFL01.eps"
+set logscale xy
+
+set termoption dashed
+
+set ylabel "Intial Residual [-]"
+set xlabel "Resolution per Radius [-]"
+
+set style line 1 lt 1 lw 3 pt 4 ps 2  linecolor rgb "red"
+set style line 2 lt 2 lw 3 pt 8 ps 2  linecolor rgb "red"
+set style line 3 lt 3 lw 3 pt 6 ps 2  linecolor rgb "red"
+
+set style line 4 lt 1 lw 2 pt 3 ps 1  linecolor rgb "orange"
+set style line 5 lt 2 lw 2 pt 4 ps 1  linecolor rgb "orange"
+set style line 6 lt 3 lw 2 pt 5 ps 1  linecolor rgb "orange"
+
+set style line 7 lt 1 lw 3 pt 4 ps 2  linecolor rgb "blue"
+set style line 8 lt 2 lw 3 pt 8 ps 2  linecolor rgb "blue"
+set style line 9 lt 3 lw 3 pt 6 ps 2  linecolor rgb "blue"
+
+set style line 10 lt 1 lw 2 pt 3 ps 1  linecolor rgb "green"
+set style line 11 lt 2 lw 2 pt 4 ps 1  linecolor rgb "green"
+set style line 12 lt 3 lw 2 pt 5 ps 1  linecolor rgb "green"
+
+set style line 13 lt 1 lw 2 pt 3 ps 1  linecolor rgb "violett"
+set style line 14 lt 2 lw 2 pt 4 ps 1  linecolor rgb "violett"
+set style line 15 lt 3 lw 2 pt 5 ps 1  linecolor rgb "violett"
+
+#set style line 3 lt 1 lw 6 linecolor rgb "red"
+#set style line 4 lt 1 lw 6 linecolor rgb "blue"
+#set style line 5 lt 1 lw 6 linecolor rgb "green"
+#set style line 6 lt 1 lw 6 linecolor rgb "black"
+
+
+set style line 20 lt 3 lw 2 pt 5 ps 1  linecolor rgb "black"
+
+#set yrange[1e-7:1]
+set xrange[1:1000]
+
+f(x) = 1/x;
+s(x) = 1/x**2;
+
+plot	"./hex-plicRDF-initRes" using (0.25/$5):($2) title "normal interpolation" with lp ls 7, \
+	"./hex-plicRDFNoInterpol-initRes" using (0.25/$5):($2) title "grad Alpha" with lp ls 1, \
+	"./tri-plicRDF-initRes" using (0.25/$5):($2) title "" with lp ls 8, \
+	"./tri-plicRDFNoInterpol-initRes" using (0.25/$5):($2) title "" with lp ls 2, \
+	"./poly-plicRDF-initRes" using (0.25/$5):($2) title "" with lp ls 9, \
+	"./poly-plicRDFNoInterpol-initRes" using (0.25/$5):($2) title "" with lp ls 3, \
+	f(x) w l title "First Order" ls 20, \
+	s(x) w l title "Second Order" ls 20
+

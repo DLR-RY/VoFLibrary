@@ -1,0 +1,21 @@
+#!/bin/sh
+
+./generateCases.sh
+./runScanCases2.sh
+./errors2FileTabSepE1
+
+cd results
+gnuplot "gnuHex"
+gnuplot "gnuTri"
+gnuplot "gnuPoly"
+gnuplot "gnuRDFCell_Hex_iter"
+gnuplot "gnuRDFCell_Tri_iter"
+gnuplot "gnuRDFCell_Poly_iter"
+gnuplot "gnuRDF_Hex_iter"
+gnuplot "gnuRDF_Tri_iter"
+gnuplot "gnuRDF_Poly_iter"
+
+
+
+
+

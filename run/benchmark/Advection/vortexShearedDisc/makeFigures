@@ -1,0 +1,106 @@
+#### import the simple module from the paraview
+from paraview.simple import *
+#### disable automatic camera reset on 'Show'
+paraview.simple._DisableFirstRenderCameraReset()
+
+# create a new 'Legacy VTK Reader'
+isoFaces_844vtk = LegacyVTKReader(FileNames=['S:\\Verification\\VoFLibary\\release\\Advection\\vortexShearedDisc\\plicRDFN\\hex\\N128Co0.5\\isoFaces\\isoFaces_844.vtk'])
+
+# get active view
+renderView1 = GetActiveViewOrCreate('RenderView')
+# uncomment following to set a specific view size
+# renderView1.ViewSize = [1084, 814]
+
+# show data in view
+isoFaces_844vtkDisplay = Show(isoFaces_844vtk, renderView1)
+# trace defaults for the display properties.
+isoFaces_844vtkDisplay.ColorArrayName = [None, '']
+isoFaces_844vtkDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
+isoFaces_844vtkDisplay.SelectOrientationVectors = 'None'
+isoFaces_844vtkDisplay.ScaleFactor = 0.1
+isoFaces_844vtkDisplay.SelectScaleArray = 'None'
+isoFaces_844vtkDisplay.GlyphType = 'Arrow'
+isoFaces_844vtkDisplay.GaussianRadius = 0.05
+isoFaces_844vtkDisplay.SetScaleArray = [None, '']
+isoFaces_844vtkDisplay.ScaleTransferFunction = 'PiecewiseFunction'
+isoFaces_844vtkDisplay.OpacityArray = [None, '']
+isoFaces_844vtkDisplay.OpacityTransferFunction = 'PiecewiseFunction'
+
+# init the 'PiecewiseFunction' selected for 'OSPRayScaleFunction'
+isoFaces_844vtkDisplay.OSPRayScaleFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+isoFaces_844vtkDisplay.ScaleTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+isoFaces_844vtkDisplay.OpacityTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# reset view to fit data
+renderView1.ResetCamera()
+
+# create a new 'Slice'
+slice1 = Slice(Input=isoFaces_844vtk)
+slice1.SliceType = 'Plane'
+slice1.SliceOffsetValues = [0.0]
+
+# init the 'Plane' selected for 'SliceType'
+slice1.SliceType.Origin = [0.4673001244664192, 0.0, 0.46639133244752884]
+
+# Properties modified on slice1.SliceType
+slice1.SliceType.Origin = [0.467300124466419, 0.0, 0.466391332447529]
+slice1.SliceType.Normal = [0.0, 1.0, 0.0]
+
+# Properties modified on slice1.SliceType
+slice1.SliceType.Origin = [0.467300124466419, 0.0, 0.466391332447529]
+slice1.SliceType.Normal = [0.0, 1.0, 0.0]
+
+# show data in view
+slice1Display = Show(slice1, renderView1)
+# trace defaults for the display properties.
+slice1Display.ColorArrayName = [None, '']
+slice1Display.OSPRayScaleFunction = 'PiecewiseFunction'
+slice1Display.SelectOrientationVectors = 'None'
+slice1Display.ScaleFactor = 0.07319665998220444
+slice1Display.SelectScaleArray = 'None'
+slice1Display.GlyphType = 'Arrow'
+slice1Display.GaussianRadius = 0.03659832999110222
+slice1Display.SetScaleArray = [None, '']
+slice1Display.ScaleTransferFunction = 'PiecewiseFunction'
+slice1Display.OpacityArray = [None, '']
+slice1Display.OpacityTransferFunction = 'PiecewiseFunction'
+
+# init the 'PiecewiseFunction' selected for 'OSPRayScaleFunction'
+slice1Display.OSPRayScaleFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+slice1Display.ScaleTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+slice1Display.OpacityTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# hide data in view
+Hide(isoFaces_844vtk, renderView1)
+
+# change solid color
+slice1Display.DiffuseColor = [0.0, 0.0, 0.0]
+
+# change representation type
+slice1Display.SetRepresentationType('Wireframe')
+
+# change solid color
+slice1Display.AmbientColor = [0.0, 0.0, 0.0]
+
+# toggle 3D widget visibility (only when running from the GUI)
+Hide3DWidgets(proxy=slice1.SliceType)
+
+#### saving camera placements for all active views
+
+# current camera placement for renderView1
+renderView1.CameraPosition = [0.4479870978587231, -1.6659052686488176, 0.46639133244752884]
+renderView1.CameraFocalPoint = [0.4794869806643196, 1.0512152424756371, 0.46639133244752884]
+renderView1.CameraViewUp = [0.0, 0.0, 1.0]
+renderView1.CameraParallelScale = 0.7032897925160194
+
+#### uncomment the following to render all views
+# RenderAllViews()
+# alternatively, if you want to write images, you can use SaveScreenshot(...).

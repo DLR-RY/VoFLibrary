@@ -1,0 +1,90 @@
+
+#!/bin/bash
+
+#schemeList=(isoAdvector isoAdvectorRDF isoAdvectorPerfectRDF isoAdvectorRDFITER)
+#schemeList=( RDFCell RDFadvect perfectRDFPoints RDF isoInverseDistance ) #RDFCell
+schemeList=( plicRDF ) #RDFCell RDFadvect isoInverseDistance   RDF perfectRDFPoints RDFCellAdvect RDFadvect isoInverseDistance
+#schemeList=(isoAdvector)
+meshList=(hex tri poly)
+#meshList=(alignedHex hex tri poly)
+CoList=(0.5 ) #
+
+#Location of tri meshes
+triMeshDir=triMeshes
+
+errorFile=errorsTabSep.log
+rm $errorFile
+
+mkdir results
+
+for nn in ${!meshList[*]}
+do
+	meshType=${meshList[$nn]}
+	echo $meshType #>> $errorFile
+	
+	for mm in ${!schemeList[*]}
+	do
+		scheme=${schemeList[$mm]}
+		fileName="$meshType-$scheme"
+
+		echo $fileName
+		
+		echo $scheme #>> $errorFile
+		
+		#Case location
+		series=$PWD/$scheme/$meshType
+
+
+	if [ "$meshType" = "hex" ];
+	then
+		NzList=(32 64 128 256) # 256) #128 256 )
+    elif [ "$meshType" = "tri" ];
+    then 
+        NzList=(22 44 88 174) # 256) #128 256 )
+	else
+		
+		NzList=(0.05 0.021 0.0105 0.0051) # 0.01) #7.8e-3  3.9e-3 )
+	fi
+
+
+		mkdir --parents $series
+
+		for n in ${!NzList[*]} 
+		do
+			declare -a E1Err
+			for m in ${!CoList[*]}
+			do
+				Co=${CoList[$m]}
+				caseName=N${NzList[$n]}Co${Co}
+	        		caseDir=$series/$caseName
+				echo $caseDir
+				#echo $n >> $errorFile
+				#uniFlowErrors -case $caseDir -latestTime > tmpfile
+				#uniFlowErrors -case $caseDir -time 0.1 > tmpfile
+
+
+				#tail -1 tmpfile | tr -s " "  | cut  -d" " -f2  > E1 # E1 error
+				#tail -1 tmpfile   > E1 # E1 error
+				tail -1 $caseDir/postProcessing/volumeFractionError/0/volumeFractionError.dat  > E1 # E1 error
+				deltaX=$(tail -1 tmpfile | tr -s " "  | cut  -d" " -f6) #  < deltaXFile  # E1 error
+				Etmp=$( cat E1 )
+				E1Err[$m]=$Etmp
+				#echo $Etmp
+				#echo ${E1Err[*]}
+
+			done
+
+			echo $deltaX
+			
+			echo "${NzList[$n]} ${E1Err[*]} $deltaX" >> results/${fileName}
+			
+		done
+
+
+		
+#		cat $errorFile | cut -d' ' -f2  >> $scheme_$meshType_E1	
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+	done
+done
+#rm tmpfile

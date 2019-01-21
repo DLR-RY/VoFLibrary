@@ -1,0 +1,86 @@
+#!/bin/bash
+
+#schemeList=(isoAdvector isoAdvectorRDF isoAdvectorPerfectRDF isoAdvectorRDFITER)
+schemeList=( plicRDF  ) #RDFCellAdvect RDF
+#schemeList=(RDFadvect )
+#schemeList=(isoAdvector)
+meshList=( tri hex poly ) #
+#meshList=(hex)
+#CoList=(0.1 0.2 0.5)
+CoList=( 0.5)
+
+#Location of tri meshes
+triMeshDir=triMeshes
+
+errorFile=errorsTabSep.log
+rm $errorFile
+
+mkdir results
+
+for nn in ${!meshList[*]}
+do
+	meshType=${meshList[$nn]}
+	echo $meshType #>> $errorFile
+	
+	for mm in ${!schemeList[*]}
+	do
+		scheme=${schemeList[$mm]}
+		fileName="$meshType-$scheme"
+
+		echo $fileName
+		
+		echo $scheme #>> $errorFile
+		
+		#Case location
+		series=$PWD/$scheme/$meshType
+
+	if [ "$meshType" = "hex" ];
+	then
+		NzList=(64 128 256 512 1024) # 256) #128 256 )
+    elif [ "$meshType" = "tri" ];
+    then 
+        NzList=(40 80 158 317 634) # 256) #128 256 )
+	else
+		
+		NzList=(56 112 224 448 896) # 0.01) #7.8e-3  3.9e-3 )
+	fi
+
+		#mkdir --parents $series
+
+		for n in ${!NzList[*]} 
+		do
+			declare -a E1Err
+			for m in ${!CoList[*]}
+			do
+				Co=${CoList[$m]}
+				if [ "$meshType" = "hex" ];
+				then
+				    caseName=N${NzList[$n]}Co${Co}
+				else
+				    caseName=${NzList[$n]}Co${Co}
+				fi
+				caseDir=$series/$caseName
+				echo $caseDir
+
+				tail -1 $caseDir/postProcessing/volumeFractionError/0/volumeFractionError.dat  > E1 # E1 error
+				#deltaX=$(tail -1 tmpfile | tr -s " "  | cut  -d" " -f6) #  < deltaXFile  # E1 error
+				Etmp=$( cat E1 )
+				E1Err[$m]=$Etmp
+				#echo $Etmp
+				#echo ${E1Err[*]}
+			done
+
+			echo $deltaX
+			
+			echo "${NzList[$n]} ${E1Err[*]}" >> results/${fileName}
+			
+		done
+
+
+		
+#		cat $errorFile | cut -d' ' -f2  >> $scheme_$meshType_E1
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+	done
+done
+#rm tmpfile

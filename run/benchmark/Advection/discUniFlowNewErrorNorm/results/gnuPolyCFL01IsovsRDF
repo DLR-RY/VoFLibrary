@@ -1,0 +1,68 @@
+#set terminal pngcairo size 800,640 font 'Arial,18'
+#set output "Recon-Circle-polyIsoVsRDF.png"
+set terminal postscript eps enhanced color  font'Arial,22'
+set output "advectDisc-polyIsoVsRDF.eps"
+set logscale xy
+
+set termoption dashed
+
+set ylabel "E_1 [-]"
+set xlabel "Resolution per Radius [-]"
+
+set style line 1 lt 1 lw 3 pt 6 ps 2  linecolor rgb "red"
+set style line 2 lt 2 lw 3 pt 4 ps 2  linecolor rgb "red"
+set style line 3 lt 3 lw 3 pt 8 ps 2  linecolor rgb "red"
+
+set style line 4 lt 1 lw 2 pt 3 ps 1  linecolor rgb "orange"
+set style line 5 lt 2 lw 2 pt 4 ps 1  linecolor rgb "orange"
+set style line 6 lt 3 lw 2 pt 5 ps 1  linecolor rgb "orange"
+
+set style line 7 lt 1 lw 3 pt 6 ps 2  linecolor rgb "blue"
+set style line 8 lt 2 lw 3 pt 4 ps 2  linecolor rgb "blue"
+set style line 9 lt 3 lw 3 pt 8 ps 2  linecolor rgb "blue"
+
+set style line 10 lt 1 lw 2 pt 3 ps 1  linecolor rgb "green"
+set style line 11 lt 2 lw 2 pt 4 ps 1  linecolor rgb "green"
+set style line 12 lt 3 lw 2 pt 5 ps 1  linecolor rgb "green"
+
+set style line 13 lt 1 lw 2 pt 3 ps 1  linecolor rgb "violett"
+set style line 14 lt 2 lw 2 pt 4 ps 1  linecolor rgb "violett"
+set style line 15 lt 3 lw 2 pt 5 ps 1  linecolor rgb "violett"
+
+#set style line 3 lt 1 lw 6 linecolor rgb "red"
+#set style line 4 lt 1 lw 6 linecolor rgb "blue"
+#set style line 5 lt 1 lw 6 linecolor rgb "green"
+#set style line 6 lt 1 lw 6 linecolor rgb "black"
+
+
+set style line 20 lt 3 lw 2 pt 5 ps 1  linecolor rgb "black"
+
+set yrange[1e-5:10]
+set xrange[3:100]
+
+f(x) = 0.1/x;
+s(x) = 0.05/x**2;
+
+ #	"./poly-isoInverseDistance" using ($1*1):($3) title "isoInverseDistance" with lp ls 2, \
+#	"./poly-RDFPoints" using ($1*1):($3) title "RDFPoints" with lp ls 5, \
+#	"./poly-perfectRDFPoints" using ($1*1):($3) title "perfectRDFPoints" with lp ls 8, \
+#	"./poly-gradAlphaSmoothed" using ($1*1):($3) title "gradAlphaSmoothed" with lp ls 11, \
+#	"./poly-gradAlpha" using ($1*1):($3) title "gradAlpha" with lp ls 14, \
+#reconSchemeList=(isoInverseDistance RDFPoints gradAlphaSmoothed gradAlpha perfectRDFPoints)
+
+
+
+
+
+#	"./poly-perfectRDFPoints" using (0.25/$2*1):($4) title "perfectRDFPoints CFL 0.2" with lp ls 8, \
+#	"./poly-perfectRDFPoints" using (0.25/$2*1):($5) title "perfectRDFPoints CFL 0.5" with lp ls 9, \
+
+plot	"./poly-isoAlpha" using (0.25/$5*1):($2) title "iso-Alpha CFL 0.1" with lp ls 1, \
+	"./poly-isoAlpha" using (0.25/$5*1):($3) title "iso-Alpha CFL 0.2" with lp ls 2, \
+	"./poly-isoAlpha" using (0.25/$5*1):($4) title "iso-Alpha CFL 0.5" with lp ls 3, \
+	"./poly-plicRDF" using (0.25/$5*1):($2) title "plic-RDF CFL 0.1" with lp ls 7, \
+	"./poly-plicRDF" using (0.25/$5*1):($3) title "plic-RDF CFL 0.2" with lp ls 8, \
+	"./poly-plicRDF" using (0.25/$5*1):($4) title "plic-RDF CFL 0.5" with lp ls 9, \
+	f(x) w l title "First Order" ls 20, \
+	s(x) w l title "Second Order" ls 20
+

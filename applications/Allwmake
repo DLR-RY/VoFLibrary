@@ -1,0 +1,12 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+set -x
+
+wmake solvers/interFlow
+wmake solvers/compressibleInterFlow
+
+wmake test/advectorVoF
+wmake test/reconstructError
+wmake utilities/preProcessing/initAlphaField
+wmake all utilities/postProcessing

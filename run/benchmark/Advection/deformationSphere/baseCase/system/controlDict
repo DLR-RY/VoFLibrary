@@ -1,0 +1,77 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.0.1                                 |
+|   \\  /    A nd           | Web:      http://www.openfoam.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+    class           dictionary;
+	location		"system";
+    object          controlDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     advectorVoF;
+
+startFrom       latestTime;
+
+startTime       0.0;
+
+stopAt          endTime;
+
+endTime         3.0;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1.5;
+
+deltaT          0.0005;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  14;
+
+writeCompression compressed;
+
+timeFormat      general;
+
+timePrecision   6;
+
+graphFormat     raw;
+
+runTimeModifiable yes;
+
+adjustTimeStep  yes;
+
+maxCo           1e10;
+maxAlphaCo      0.5;
+
+maxDeltaT       0.2;
+
+functions
+{
+	volumeFractionError
+	{
+		type volumeFractionError;
+		libs ("libgeoVoF.so");
+		field alpha.water;
+		function functionSphere;
+		radius      0.15;
+		centre      (0.5 0.75 0.25);
+		writeControl    adjustableRunTime;
+		writeInterval   1.5;
+		writePrecision 	3;
+	}
+}
+
+
+
+// ************************************************************************* //

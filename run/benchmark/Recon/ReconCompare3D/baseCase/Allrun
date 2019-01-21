@@ -1,0 +1,10 @@
+#!/bin/sh
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+application=$(sed -ne "s/^application\s*\(.*\);/\1/p" system/controlDict)
+
+#isoSurf > logs/isoSurf.log 2>&1
+
+runApplication $(getApplication)
+
+

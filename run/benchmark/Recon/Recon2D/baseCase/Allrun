@@ -1,0 +1,7 @@
+#!/bin/sh
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+application=$(sed -ne "s/^application\s*\(.*\);/\1/p" system/controlDict)
+
+runApplication $(getApplication)
+

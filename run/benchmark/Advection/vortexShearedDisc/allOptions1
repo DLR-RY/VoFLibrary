@@ -1,0 +1,231 @@
+#make Picture
+#### import the simple module from the paraview
+from paraview.simple import *
+#### disable automatic camera reset on 'Show'
+paraview.simple._DisableFirstRenderCameraReset()
+
+# create a new 'Legacy VTK Reader'
+isoFaces_844vtk = LegacyVTKReader(FileNames=['S:\\Verification\\VoFLibary\\release\\Advection\\vortexShearedDisc\\plicRDFN\\hex\\N128Co0.5\\isoFaces\\isoFaces_844.vtk'])
+
+# get active view
+renderView1 = GetActiveViewOrCreate('RenderView')
+# uncomment following to set a specific view size
+# renderView1.ViewSize = [1084, 814]
+
+# show data in view
+isoFaces_844vtkDisplay = Show(isoFaces_844vtk, renderView1)
+# trace defaults for the display properties.
+isoFaces_844vtkDisplay.Representation = 'Surface'
+isoFaces_844vtkDisplay.AmbientColor = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.ColorArrayName = [None, '']
+isoFaces_844vtkDisplay.DiffuseColor = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.LookupTable = None
+isoFaces_844vtkDisplay.MapScalars = 1
+isoFaces_844vtkDisplay.InterpolateScalarsBeforeMapping = 1
+isoFaces_844vtkDisplay.Opacity = 1.0
+isoFaces_844vtkDisplay.PointSize = 2.0
+isoFaces_844vtkDisplay.LineWidth = 1.0
+isoFaces_844vtkDisplay.Interpolation = 'Gouraud'
+isoFaces_844vtkDisplay.Specular = 0.0
+isoFaces_844vtkDisplay.SpecularColor = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.SpecularPower = 100.0
+isoFaces_844vtkDisplay.Ambient = 0.0
+isoFaces_844vtkDisplay.Diffuse = 1.0
+isoFaces_844vtkDisplay.EdgeColor = [0.0, 0.0, 0.5]
+isoFaces_844vtkDisplay.BackfaceRepresentation = 'Follow Frontface'
+isoFaces_844vtkDisplay.BackfaceAmbientColor = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.BackfaceDiffuseColor = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.BackfaceOpacity = 1.0
+isoFaces_844vtkDisplay.Position = [0.0, 0.0, 0.0]
+isoFaces_844vtkDisplay.Scale = [1.0, 1.0, 1.0]
+isoFaces_844vtkDisplay.Orientation = [0.0, 0.0, 0.0]
+isoFaces_844vtkDisplay.Origin = [0.0, 0.0, 0.0]
+isoFaces_844vtkDisplay.Pickable = 1
+isoFaces_844vtkDisplay.Texture = None
+isoFaces_844vtkDisplay.Triangulate = 0
+isoFaces_844vtkDisplay.NonlinearSubdivisionLevel = 1
+isoFaces_844vtkDisplay.UseDataPartitions = 0
+isoFaces_844vtkDisplay.OSPRayUseScaleArray = 0
+isoFaces_844vtkDisplay.OSPRayScaleArray = ''
+isoFaces_844vtkDisplay.OSPRayScaleFunction = 'PiecewiseFunction'
+isoFaces_844vtkDisplay.Orient = 0
+isoFaces_844vtkDisplay.OrientationMode = 'Direction'
+isoFaces_844vtkDisplay.SelectOrientationVectors = 'None'
+isoFaces_844vtkDisplay.Scaling = 0
+isoFaces_844vtkDisplay.ScaleMode = 'No Data Scaling Off'
+isoFaces_844vtkDisplay.ScaleFactor = 0.1
+isoFaces_844vtkDisplay.SelectScaleArray = 'None'
+isoFaces_844vtkDisplay.GlyphType = 'Arrow'
+isoFaces_844vtkDisplay.SelectionCellLabelBold = 0
+isoFaces_844vtkDisplay.SelectionCellLabelColor = [0.0, 1.0, 0.0]
+isoFaces_844vtkDisplay.SelectionCellLabelFontFamily = 'Arial'
+isoFaces_844vtkDisplay.SelectionCellLabelFontSize = 18
+isoFaces_844vtkDisplay.SelectionCellLabelItalic = 0
+isoFaces_844vtkDisplay.SelectionCellLabelJustification = 'Left'
+isoFaces_844vtkDisplay.SelectionCellLabelOpacity = 1.0
+isoFaces_844vtkDisplay.SelectionCellLabelShadow = 0
+isoFaces_844vtkDisplay.SelectionPointLabelBold = 0
+isoFaces_844vtkDisplay.SelectionPointLabelColor = [1.0, 1.0, 0.0]
+isoFaces_844vtkDisplay.SelectionPointLabelFontFamily = 'Arial'
+isoFaces_844vtkDisplay.SelectionPointLabelFontSize = 18
+isoFaces_844vtkDisplay.SelectionPointLabelItalic = 0
+isoFaces_844vtkDisplay.SelectionPointLabelJustification = 'Left'
+isoFaces_844vtkDisplay.SelectionPointLabelOpacity = 1.0
+isoFaces_844vtkDisplay.SelectionPointLabelShadow = 0
+isoFaces_844vtkDisplay.GaussianRadius = 0.05
+isoFaces_844vtkDisplay.ShaderPreset = 'Sphere'
+isoFaces_844vtkDisplay.Emissive = 0
+isoFaces_844vtkDisplay.ScaleByArray = 0
+isoFaces_844vtkDisplay.SetScaleArray = [None, '']
+isoFaces_844vtkDisplay.ScaleTransferFunction = 'PiecewiseFunction'
+isoFaces_844vtkDisplay.OpacityByArray = 0
+isoFaces_844vtkDisplay.OpacityArray = [None, '']
+isoFaces_844vtkDisplay.OpacityTransferFunction = 'PiecewiseFunction'
+
+# init the 'PiecewiseFunction' selected for 'OSPRayScaleFunction'
+isoFaces_844vtkDisplay.OSPRayScaleFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'Arrow' selected for 'GlyphType'
+isoFaces_844vtkDisplay.GlyphType.TipResolution = 6
+isoFaces_844vtkDisplay.GlyphType.TipRadius = 0.1
+isoFaces_844vtkDisplay.GlyphType.TipLength = 0.35
+isoFaces_844vtkDisplay.GlyphType.ShaftResolution = 6
+isoFaces_844vtkDisplay.GlyphType.ShaftRadius = 0.03
+isoFaces_844vtkDisplay.GlyphType.Invert = 0
+
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+isoFaces_844vtkDisplay.ScaleTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+isoFaces_844vtkDisplay.OpacityTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# reset view to fit data
+renderView1.ResetCamera()
+
+# create a new 'Slice'
+slice1 = Slice(Input=isoFaces_844vtk)
+slice1.SliceType = 'Plane'
+slice1.Crinkleslice = 0
+slice1.Triangulatetheslice = 1
+slice1.SliceOffsetValues = [0.0]
+
+# init the 'Plane' selected for 'SliceType'
+slice1.SliceType.Origin = [0.4673001244664192, 0.0, 0.46639133244752884]
+slice1.SliceType.Normal = [1.0, 0.0, 0.0]
+slice1.SliceType.Offset = 0.0
+
+# Properties modified on slice1.SliceType
+slice1.SliceType.Origin = [0.467300124466419, 0.0, 0.466391332447529]
+slice1.SliceType.Normal = [0.0, 1.0, 0.0]
+
+# Properties modified on slice1.SliceType
+slice1.SliceType.Origin = [0.467300124466419, 0.0, 0.466391332447529]
+slice1.SliceType.Normal = [0.0, 1.0, 0.0]
+
+# show data in view
+slice1Display = Show(slice1, renderView1)
+# trace defaults for the display properties.
+slice1Display.Representation = 'Surface'
+slice1Display.AmbientColor = [1.0, 1.0, 1.0]
+slice1Display.ColorArrayName = [None, '']
+slice1Display.DiffuseColor = [1.0, 1.0, 1.0]
+slice1Display.LookupTable = None
+slice1Display.MapScalars = 1
+slice1Display.InterpolateScalarsBeforeMapping = 1
+slice1Display.Opacity = 1.0
+slice1Display.PointSize = 2.0
+slice1Display.LineWidth = 1.0
+slice1Display.Interpolation = 'Gouraud'
+slice1Display.Specular = 0.0
+slice1Display.SpecularColor = [1.0, 1.0, 1.0]
+slice1Display.SpecularPower = 100.0
+slice1Display.Ambient = 0.0
+slice1Display.Diffuse = 1.0
+slice1Display.EdgeColor = [0.0, 0.0, 0.5]
+slice1Display.BackfaceRepresentation = 'Follow Frontface'
+slice1Display.BackfaceAmbientColor = [1.0, 1.0, 1.0]
+slice1Display.BackfaceDiffuseColor = [1.0, 1.0, 1.0]
+slice1Display.BackfaceOpacity = 1.0
+slice1Display.Position = [0.0, 0.0, 0.0]
+slice1Display.Scale = [1.0, 1.0, 1.0]
+slice1Display.Orientation = [0.0, 0.0, 0.0]
+slice1Display.Origin = [0.0, 0.0, 0.0]
+slice1Display.Pickable = 1
+slice1Display.Texture = None
+slice1Display.Triangulate = 0
+slice1Display.NonlinearSubdivisionLevel = 1
+slice1Display.UseDataPartitions = 0
+slice1Display.OSPRayUseScaleArray = 0
+slice1Display.OSPRayScaleArray = ''
+slice1Display.OSPRayScaleFunction = 'PiecewiseFunction'
+slice1Display.Orient = 0
+slice1Display.OrientationMode = 'Direction'
+slice1Display.SelectOrientationVectors = 'None'
+slice1Display.Scaling = 0
+slice1Display.ScaleMode = 'No Data Scaling Off'
+slice1Display.ScaleFactor = 0.07319665998220444
+slice1Display.SelectScaleArray = 'None'
+slice1Display.GlyphType = 'Arrow'
+slice1Display.SelectionCellLabelBold = 0
+slice1Display.SelectionCellLabelColor = [0.0, 1.0, 0.0]
+slice1Display.SelectionCellLabelFontFamily = 'Arial'
+slice1Display.SelectionCellLabelFontSize = 18
+slice1Display.SelectionCellLabelItalic = 0
+slice1Display.SelectionCellLabelJustification = 'Left'
+slice1Display.SelectionCellLabelOpacity = 1.0
+slice1Display.SelectionCellLabelShadow = 0
+slice1Display.SelectionPointLabelBold = 0
+slice1Display.SelectionPointLabelColor = [1.0, 1.0, 0.0]
+slice1Display.SelectionPointLabelFontFamily = 'Arial'
+slice1Display.SelectionPointLabelFontSize = 18
+slice1Display.SelectionPointLabelItalic = 0
+slice1Display.SelectionPointLabelJustification = 'Left'
+slice1Display.SelectionPointLabelOpacity = 1.0
+slice1Display.SelectionPointLabelShadow = 0
+slice1Display.GaussianRadius = 0.03659832999110222
+slice1Display.ShaderPreset = 'Sphere'
+slice1Display.Emissive = 0
+slice1Display.ScaleByArray = 0
+slice1Display.SetScaleArray = [None, '']
+slice1Display.ScaleTransferFunction = 'PiecewiseFunction'
+slice1Display.OpacityByArray = 0
+slice1Display.OpacityArray = [None, '']
+slice1Display.OpacityTransferFunction = 'PiecewiseFunction'
+
+# init the 'PiecewiseFunction' selected for 'OSPRayScaleFunction'
+slice1Display.OSPRayScaleFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'Arrow' selected for 'GlyphType'
+slice1Display.GlyphType.TipResolution = 6
+slice1Display.GlyphType.TipRadius = 0.1
+slice1Display.GlyphType.TipLength = 0.35
+slice1Display.GlyphType.ShaftResolution = 6
+slice1Display.GlyphType.ShaftRadius = 0.03
+slice1Display.GlyphType.Invert = 0
+
+# init the 'PiecewiseFunction' selected for 'ScaleTransferFunction'
+slice1Display.ScaleTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# init the 'PiecewiseFunction' selected for 'OpacityTransferFunction'
+slice1Display.OpacityTransferFunction.Points = [0.0003351210034452379, 0.0, 0.5, 0.0, 0.9996629953384399, 1.0, 0.5, 0.0]
+
+# hide data in view
+Hide(isoFaces_844vtk, renderView1)
+
+# change representation type
+slice1Display.SetRepresentationType('Wireframe')
+
+# change solid color
+slice1Display.AmbientColor = [0.0, 0.0, 0.0]
+
+#### saving camera placements for all active views
+
+# current camera placement for renderView1
+renderView1.CameraPosition = [0.4358002416608227, -2.717120511124455, 0.46639133244752884]
+renderView1.CameraFocalPoint = [0.4673001244664192, 0.0, 0.46639133244752884]
+renderView1.CameraViewUp = [0.0, 0.0, 1.0]
+renderView1.CameraParallelScale = 0.7032897925160194
+
+#### uncomment the following to render all views
+# RenderAllViews()
+# alternatively, if you want to write images, you can use SaveScreenshot(...).
