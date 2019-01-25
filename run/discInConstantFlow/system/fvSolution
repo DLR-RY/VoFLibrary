@@ -1,0 +1,62 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  plus                                  |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "alpha.*"
+    {
+        cAlpha          1;
+        nAlphaSubCycles 1;
+
+	    advectionScheme isoAdvector;
+
+        reconstructionSchemes plicRDF;
+
+        vof2IsoTol 1e-8;
+        surfCellTol 1e-8;
+        writeVTK false;
+    }
+}
+
+geoVoF
+{
+	advectionScheme advectionIso;
+
+	reconstructionSchemes isoInverseDistance; //RDFadvect
+
+	//RDFadvectCoeffs
+	isoInverseDistanceCoeffs
+	{
+		vof2IsoTol 1e-8;
+		surfCellTol 1e-8;
+		writeVTK true;
+	}
+
+
+}
+PIMPLE
+{
+    frozenFlow      yes;
+    momentumPredictor no;
+    nCorrectors     -1;
+    nNonOrthogonalCorrectors -1;
+    pRefCell        0;
+    pRefValue       0;
+}
+
+
+// ************************************************************************* //

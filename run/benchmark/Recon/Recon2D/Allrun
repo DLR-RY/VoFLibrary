@@ -1,0 +1,18 @@
+#!/bin/sh
+
+./generateScanCases.sh
+./generateIterCases.sh
+./runScanCases2.sh
+./errors2FileTabSepE1
+
+cd results
+gnuplot "gnuHex"
+gnuplot "gnuTri_iter"
+gnuplot "gnuTriPos"
+gnuplot "gnuPoly"
+
+
+
+
+
+

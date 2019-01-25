@@ -1,0 +1,75 @@
+#set terminal pngcairo size 800,640 font 'Arial,18'
+#set output "Recon-Circle-tri.png"
+set terminal postscript eps size 4,3 font 'Arial,18'
+set output "Recon-Circle-RDF-tri-iter.eps"
+set logscale xy
+
+set termoption dashed
+
+set title "Tri"
+set ylabel "Error [-]"
+set xlabel "Resolution per Radius [-]"
+
+set style line 1 lt 1 lw 2 pt 3 ps 1  linecolor rgb "red"
+set style line 2 lt 2 lw 2 pt 4 ps 1  linecolor rgb "red"
+set style line 3 lt 3 lw 2 pt 5 ps 1  linecolor rgb "red"
+
+set style line 4 lt 1 lw 2 pt 3 ps 1  linecolor rgb "orange"
+set style line 5 lt 2 lw 2 pt 4 ps 1  linecolor rgb "orange"
+set style line 6 lt 3 lw 2 pt 5 ps 1  linecolor rgb "orange"
+
+set style line 7 lt 1 lw 2 pt 3 ps 1  linecolor rgb "blue"
+set style line 8 lt 2 lw 2 pt 4 ps 1  linecolor rgb "blue"
+set style line 9 lt 3 lw 2 pt 5 ps 1  linecolor rgb "blue"
+
+set style line 10 lt 1 lw 2 pt 3 ps 1  linecolor rgb "green"
+set style line 11 lt 2 lw 2 pt 4 ps 1  linecolor rgb "green"
+set style line 12 lt 3 lw 2 pt 5 ps 1  linecolor rgb "green"
+
+set style line 13 lt 1 lw 2 pt 3 ps 1  linecolor rgb "violett"
+set style line 14 lt 2 lw 2 pt 4 ps 1  linecolor rgb "violett"
+set style line 15 lt 3 lw 2 pt 5 ps 1  linecolor rgb "violett"
+
+#set style line 3 lt 1 lw 6 linecolor rgb "red"
+#set style line 4 lt 1 lw 6 linecolor rgb "blue"
+#set style line 5 lt 1 lw 6 linecolor rgb "green"
+#set style line 6 lt 1 lw 6 linecolor rgb "black"
+
+
+set style line 20 lt 3 lw 2 pt 5 ps 1  linecolor rgb "black"
+
+set yrange[0.004:10]
+set xrange[4:1000]
+
+f(x) = 1/x;
+s(x) = 1/x**2;
+#plot	"./hex-isoAdvector" using ($1*1):($2*1) title "isoAdvector" with lp ls 1, \
+#	"./hex-isoAdvector" using ($1*1):($3*1) title "" with lp ls 2, \
+#	"./hex-isoAdvector" using ($1*1):($4*1) title "" with lp ls 3, \
+#	"./hex-isoAdvectorRDF" using ($1*1):($2*1) title "isoAdvectorRDF" with lp ls 4, \
+#	"./hex-isoAdvectorRDF" using ($1*1):($3*1) title "" with lp ls 5, \
+#	"./hex-isoAdvectorRDF" using ($1*1):($4*1) title "" with lp ls 6, \
+#	"./hex-isoAdvectorPerfectRDF" using ($1*1):($2*1) title "isoAdvectorPerfectRDF CFL 0.1" with lp ls 7, \
+#	"./hex-isoAdvectorPerfectRDF" using ($1*1):($3*1) title "" with lp ls 8, \
+#	"./hex-isoAdvectorPerfectRDF" using ($1*1):($4*1) title "" with lp ls 9, \
+#	"./hex-isoAdvectorRDFITER" using ($1*1):($2*1) title "isoAdvectorRDFITER" with lp ls 10, \
+#	"./hex-isoAdvectorRDFITER" using ($1*1):($3*1) title "" with lp ls 11, \
+#	"./hex-isoAdvectorRDFITER" using ($1*1):($4*1) title "" with lp ls 12, \
+#	f(x) w l title "First Order" ls 20, \
+#	s(x) w l title "Second Order" ls 20
+
+# 	"./tri-isoInverseDistance" using ($1*1):($3) title "isoInverseDistance" with lp ls 2, \
+#	"./tri-RDFPoints" using ($1*1):($3) title "RDFPoints" with lp ls 5, \
+#	"./tri-perfectRDFPoints" using ($1*1):($3) title "perfectRDFPoints" with lp ls 8, \
+#	"./tri-gradAlphaSmoothed" using ($1*1):($3) title "gradAlphaSmoothed" with lp ls 11, \
+#	"./tri-gradAlpha" using ($1*1):($3) title "gradAlpha" with lp ls 14, \
+#
+#	"./tri-reconstructError" using ($1*1):($6*1) title "isoAdvectorRDF Points CFL 0.1" with lp ls 13, \
+
+plot	"./tri-RDF-iter2" using ($6*1):($2) title "RDF-iter2" with lp ls 1, \
+	"./tri-RDF-iter3" using ($6*1):($2) title "RDF-iter3" with lp ls 4, \
+	"./tri-RDF-iter4" using ($6*1):($2) title "RDF-iter4" with lp ls 7, \
+	"./tri-RDF-iter5" using ($6*1):($2) title "RDF-iter5" with lp ls 10, \
+	f(x) w l title "First Order" ls 20 #, \
+	#s(x) w l title "Second Order" ls 20
+

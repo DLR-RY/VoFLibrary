@@ -1,3 +1,7 @@
 # VoFLibrary
 
-The source code will be uploaded on acceptance of the manuscript
+# Installation:
+
+Compiles with OpenFoam+ version 1812
+
+./Allwmake

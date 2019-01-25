@@ -1,0 +1,10 @@
+Initial water volume V0 = 0.014131434979977
+Velocity U0 = (1.1339199129936e-08 -5.6695995649679e-09 -5.6695995649679e-09)
+centre (0.5000000340176 0.4999999829912 0.2999999829912)
+set alpha1Exact
+alpha1Exact0.014131434980132
+diff alpha1Exact0.00038041751477302
+Time: 3
+length 0.00390625
+E1/V0     dVrel     aMin      1-aMax    avg deltaX        E1    
+   0.0269  1.02e-07         0         0  0.003906 0.0003804 

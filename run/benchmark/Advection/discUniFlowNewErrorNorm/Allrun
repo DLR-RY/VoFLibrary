@@ -1,0 +1,5 @@
+#!/bin/sh
+
+./generateCases.sh
+./runScanCases2.sh
+./errors2FileTabSepE1

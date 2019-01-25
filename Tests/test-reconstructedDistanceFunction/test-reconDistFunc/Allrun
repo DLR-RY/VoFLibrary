@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+restore0Dir
+touch Test-reconDistFunc.foam
+runApplication blockMesh
+runApplication initAlphaField
+runApplication test-reconstructedDistanceFunction
+
+
+

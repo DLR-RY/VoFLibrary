@@ -1,0 +1,77 @@
+#!/bin/bash
+
+#schemeList=(isoAdvector isoAdvectorRDF isoAdvectorPerfectRDF isoAdvectorRDFITER)
+schemeList=(reconstructError reconstructError reconstructError) # reconstructError reconstructError reconstructError reconstructError reconstructError)
+reconSchemeList=(plicRDF isoAlpha isoRDF) #plicRDFN3 plicRDFN5 isoRDFN2 isoRDFN3 isoRDFN5 isoAlpha
+#schemeList=(isoAdvector)
+meshList=(hex tri poly)
+#meshList=(hex)
+#CoList=(0.1 0.2 0.5)
+
+#Location of tri meshes
+triMeshDir=triMeshes
+
+errorFile=errorsTabSep.log
+rm $errorFile
+
+for nn in ${!meshList[*]}
+do
+	meshType=${meshList[$nn]}
+	echo $meshType #>> $errorFile
+	
+	for mm in ${!reconSchemeList[*]}
+	do
+		reconScheme=${reconSchemeList[$mm]}
+		fileName="$meshType-$reconScheme"
+
+		echo $fileName
+		
+		echo $reconScheme #>> $errorFile
+		
+		#Case location
+		series=$PWD/$reconScheme/$meshType
+
+		if [ "$meshType" = "hex" ];
+		then
+			NzList=( 15 30 60 120 240 480)
+		else
+			NzList=(10 15 30 60 120 240)	
+		fi
+
+		mkdir --parents $series
+
+		for n in ${!NzList[*]} 
+		do
+#			declare -a E1Err
+#			for m in ${!CoList[*]}
+#			do
+#				Co=${CoList[$m]}
+				caseName=N${NzList[$n]}
+				caseDir=$series/$caseName
+				#cd caseDir
+				#echo $caseDir
+				#echo $n >> $errorFile
+				#uniFlowErrors -case $caseDir -latestTime > tmpfile
+
+				#tail -1 $caseDir/normalError.dat  > E1 # E1 error
+                tail -1 $caseDir/postProcessing/reconstructionError/0/error.dat  > E1 # E1 error
+				#deltaX=$(tail -1 tmpfile | tr -s " "  | cut  -d" " -f7) #  < deltaXFile  # E1 error
+				Etmp=$( cat E1 )
+				#E1Err[$m]=$Etmp
+				#echo $Etmp
+				#echo ${E1Err[*]}
+
+			#done
+			echo "${NzList[$n]} $Etmp"
+			echo "${NzList[$n]} $Etmp" >> results/${fileName}
+			
+		done
+
+
+		
+#		cat $errorFile | cut -d' ' -f2  >> $scheme_$meshType_E1
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+#		cat $errorFile | cut -d' ' -f3  >> $scheme_$meshType_dV
+	done
+done
+#rm tmpfile

@@ -1,0 +1,16 @@
+EXE_INC = \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/sampling/lnInclude \
+    -I../../../src/reconstructedDistanceFunction/lnInclude \
+    -I../../../src/zoneDistribute/lnInclude \
+    -I../../../src/VoF/lnInclude
+
+EXE_LIBS = \
+    -L$(FOAM_USER_LIBBIN) \
+    -lreconstructedDistanceFunction \
+    -lVoF \
+    -lzoneDistribute \ 
+    -lfiniteVolume \
+    -lmeshTools \
+    -lsampling

@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+#SBATCH --job-name=test
+#SBATCH --output=res.txt
+#
+####SBATCH --nodes=2
+#SBATCH --ntasks=64
+
+mpiexec compressibleInterFoam -parallel
+#reconstructPar
+#sleep 2

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+./generateScanCases.sh
+./runScanCases2.sh
+./errors2FileTabSepE1
+
+cd results
+gnuplot "gnuHex"
+gnuplot "gnuTri"
+gnuplot "gnuTriPos"
+gnuplot "gnuPoly"
+
+
+
+
+
+

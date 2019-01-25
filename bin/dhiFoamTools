@@ -1,0 +1,94 @@
+#*--------------------------------------------------------------------------*\
+#             isoAdvector | Copyright (C) 2016 Johan Roenby, DHI              |
+#-----------------------------------------------------------------------------
+#
+# License
+#    This file is part of IsoAdvector, which is an unofficial extension to
+#    OpenFOAM.
+#
+#    IsoAdvector is free software: you can redistribute it and/or modify it
+#    under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    IsoAdvector is distributed in the hope that it will be useful, but WITHOUT
+#    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+#    for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with IsoAdvector. If not, see <http://www.gnu.org/licenses/>.
+#
+# Script
+#     dhiFoamTools
+#
+# Description
+#     Miscellaneous utility functions for IsoAdvector code and cases
+#-----------------------------------------------------------------------------
+
+foamParmSet()
+{
+    sed -i "s/${1}\s.*;/${1}\t${2};/" ${3}
+}
+
+foamRunCasesIn()
+{
+    for var in "$@";
+    do
+        echo "$var"
+        for n in $( find $var -name "controlDict" );
+        do
+            caseDir=$( dirname $(dirname $n))
+            echo "Running case " $caseDir "..."
+            cd $caseDir
+            ./Allrun &
+            cd -
+        done
+    done
+}
+
+replaceHeader()
+{
+    firstCharacters=$(head -1 ${1}  | cut -c 1-4)
+    scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    tmpFileName=tmp_"$(date +%s)"
+    ln=$(grep -n "<http://www.gnu.org/licenses/>." ${1} | cut -f1 -d:)
+    if [ "$firstCharacters" = "/*--" ] && [ ! -z $ln ];
+    then
+        echo "Replacing header for " ${1} "..."
+        sed -i "1,${ln}d" ${1}
+        cat $scriptDir/header ${1} > $tmpFileName; mv $tmpFileName ${1}
+    else
+        echo ${1} " does not have a properly formatted header to replace."
+    fi
+}
+
+replaceAllHeaders()
+{
+    for var in "$@";
+    do
+        echo "$var"
+        for n in $( find $var -name "*.H" -o -name "*.C" );
+        do
+            replaceHeader $n
+        done
+    done
+}
+
+renameField()
+{
+    #If field name is something like pd whic can also appear in words like 
+    #topdeck it will still be changed which is not good.
+    #Therefore modify to make sure that e.g. pd is only modified if it is not 
+    #surrounded by alphabetic letters. In that case we will have to change
+    #pdFinal as well which will be done automatically by the current form.
+    targetDir=${3:-.}
+    grep -rl "${1}" $targetDir | xargs sed -i "s/${1}/${2}/"
+    for n in $( find $targetDir -name "${1}" );
+    do
+        dir=$(dirname $n)
+        mv $n ${dir}/${2}
+    done
+}
+
+#------------------------------------------------------------------------------

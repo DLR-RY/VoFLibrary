@@ -1,0 +1,14 @@
+#!/bin/bash
+cd ${0%/*} || exit 1   # run from this directory
+
+wmake libso src/VoF
+wmake libso src/postProcessing
+
+wmake apps/setFieldfromTable
+wmake apps/initAlphaField
+
+wmake apps/benchmark/advectorVoF
+wmake apps/benchmark/reconstructInterface
+
+wmake solver/interFlow
+wmake solver/compressibleInterFlow
