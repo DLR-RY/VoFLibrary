@@ -128,6 +128,8 @@ class zoneDistribute
 
   public:
     // Constructors
+        // Declare name of the class and its debug switch
+        TypeName("zoneDistribute");
 
         //- Construct from fvMesh
         zoneDistribute(const fvMesh&);

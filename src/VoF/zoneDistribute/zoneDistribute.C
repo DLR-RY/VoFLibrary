@@ -31,6 +31,10 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+namespace Foam
+{
+    defineTypeNameAndDebug(zoneDistribute, 0);
+}
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneDistribute::coupledFacesPatch() const

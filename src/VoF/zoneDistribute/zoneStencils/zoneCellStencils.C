@@ -26,6 +26,13 @@ License
 #include "emptyPolyPatch.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(zoneCellStencils, 0);
+}
+
+
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneCellStencils::nonEmptyFacesPatch() const
 {

@@ -27,6 +27,12 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+namespace Foam
+{
+    defineTypeNameAndDebug(zoneCPCStencil, 0);
+}
+
+
 Foam::Map<bool> Foam::zoneCPCStencil::syncCouledBoundaryPoints
 (
     const boolList& zone,
@@ -231,7 +237,6 @@ void Foam::zoneCPCStencil::calculateStencil
 
 void Foam::zoneCPCStencil::updateMesh(const mapPolyMesh& mpm)
 {
-
     if(mesh_.topoChanging())
     { 
         // resize map and globalIndex

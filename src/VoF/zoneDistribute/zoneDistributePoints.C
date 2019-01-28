@@ -31,6 +31,10 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+namespace Foam
+{
+    defineTypeNameAndDebug(zoneDistributePoints, 0);
+}
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneDistributePoints::nonEmptyWedgePatch() const

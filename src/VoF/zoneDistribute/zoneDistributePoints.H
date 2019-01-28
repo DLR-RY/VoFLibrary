@@ -113,6 +113,8 @@ class zoneDistributePoints
 
   public:
     // Constructors
+        // Declare name of the class and its debug switch
+        TypeName("zoneDistributePoints");
 
         //- Construct from fvMesh
         zoneDistributePoints(const fvMesh&);

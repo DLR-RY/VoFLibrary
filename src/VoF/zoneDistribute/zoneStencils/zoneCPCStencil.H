@@ -89,6 +89,8 @@ class zoneCPCStencil
 public:
 
     // Constructors
+        // Declare name of the class and its debug switch
+        TypeName("zoneCPCStencil");
 
         //- Construct from all cells and boundary faces
         explicit zoneCPCStencil(const fvMesh&);

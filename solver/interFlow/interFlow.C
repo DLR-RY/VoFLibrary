@@ -125,11 +125,11 @@ int main(int argc, char *argv[])
                 if (mesh.changing())
                 {
                     // gets recompute by surfaces forces
-                    // gh = (g & mesh.C()) - ghRef;
-                    // ghf = (g & mesh.Cf()) - ghRef;
+                    gh = (g & mesh.C()) - ghRef;
+                    ghf = (g & mesh.Cf()) - ghRef;
                     advector->surf().mapAlphaField();
                     rho == alpha1*rho1 + alpha2*rho2;
-                    // rho.oldTime() = rho;
+                    rho.oldTime() = rho; // not sure if needed
 
                     MRF.update();
 
