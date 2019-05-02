@@ -39,9 +39,11 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 #include "globalIndex.H"
 #include "Map.H"
 #include "zoneDistribute.H"
+#include "dimensionedScalar.H"
 
 
 
@@ -121,6 +123,13 @@ public:
         const boolList& nextToInterface,
         const pointField& centre,
         const vectorField& normals
+    );
+
+    void updateContactAngle
+    (
+        const volScalarField& alpha,
+        const volVectorField& U,
+        surfaceVectorField::Boundary& nHatb
     );
 
     const volScalarField& cellDistLevel()

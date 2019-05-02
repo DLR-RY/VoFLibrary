@@ -90,7 +90,13 @@ Foam::reconstruction::isoAlpha::~isoAlpha()
 // ************************************************************************* //
 void Foam::reconstruction::isoAlpha::reconstruct()
 {
+    bool uptodate = alreadyReconstructed();
 
+    if(uptodate)
+    {
+        return;
+    }
+    
     // Interpolating alpha1 cell centre values to mesh points (vertices)
     if (mesh_.topoChanging())
     {

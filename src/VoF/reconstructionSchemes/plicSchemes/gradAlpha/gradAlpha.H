@@ -88,7 +88,7 @@ private:
         scalar surfCellTol_;
 
         // provides stencil and map
-        zoneDistribute exchangeFields_;
+        zoneDistribute& exchangeFields_;
 
         //- surfaceIterator finds the plane centre for specified VOF value
         surfaceIteratorPLIC sIterPLIC_;

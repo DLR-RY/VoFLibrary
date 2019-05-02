@@ -32,6 +32,7 @@ multiDimPolyFitter/leastSquareInterpolate.C
 multiDimPolyFitter/leastSquareFitParabolid.C
 
 reconstructedDistanceFunction/reconstructedDistanceFunction.C
+markInterfaceRegion/markInterfaceRegion.C
 
 reconstructionSchemes/newReconstructionSchemes.C
 reconstructionSchemes/reconstructionSchemes.C

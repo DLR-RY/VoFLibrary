@@ -119,7 +119,9 @@ void Foam::zoneCellStencils::validBoundaryFaces(boolList& isValidBFace) const
 {
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
-    isValidBFace.setSize(mesh_.nFaces()-mesh_.nInternalFaces(), true);
+    isValidBFace.setSize(mesh_.nFaces()-mesh_.nInternalFaces());
+
+    isValidBFace = true;
 
     for (const polyPatch& pp : patches)
     {

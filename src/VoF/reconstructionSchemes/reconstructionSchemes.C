@@ -224,6 +224,42 @@ void Foam::reconstructionSchemes::isoFacesToFile
     }
 }
 
+bool Foam::reconstructionSchemes::alreadyReconstructed()
+{
+    const fvMesh& mesh = alpha1_.mesh();
+    label& curTimeIndex = timeIndexAndIter_.first();
+    label& curIter = timeIndexAndIter_.second();
+
+    // rest timeIndex and curIter
+    if(mesh.time().timeIndex() > curTimeIndex)
+    {
+        // maybe problematic with nOuterCorrectores
+        // if(curIter >= 1)
+        // {
+        //     curIter = 0;
+        //     return true;
+        // }
+        curTimeIndex = mesh.time().timeIndex();
+        curIter = 0;
+        return false;
+    }
+    
+    // reconstruct always when subcycling
+    if(mesh.time().subCycling() != 0)
+    {
+        return false;
+    }
+    
+    curIter++;
+    if(curIter > 1)
+    {
+        return true;
+    }
+
+    return false;
+
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::reconstructionSchemes::reconstructionSchemes
@@ -281,7 +317,8 @@ Foam::reconstructionSchemes::reconstructionSchemes
    ),
    interfaceCell_(alpha1_.mesh().nCells(),false),
    interfaceLabels_(0.2*alpha1_.mesh().nCells()),
-   writeVTK_(false)
+   writeVTK_(false),
+   timeIndexAndIter_(0,0)
 {
 
 }

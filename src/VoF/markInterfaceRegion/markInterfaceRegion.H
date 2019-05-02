@@ -19,32 +19,33 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
     
 Class
-    Foam::leastSquareFitParabolid
+    Foam::markInterfaceRegion
 
 Description
-    Fits paraboloid in the a point cloud; fit is in the local
-    coordinate system. 
+    Calculates a reconstructed distance function if the cells a more than
+    two cell layer a ways the octree based method needs to be used. Also
+    marks the cell layers near the interface cells.
 
 Author
     Henning Scheufler, DLR, all rights reserved.
 
 SourceFiles
-    leastSquareFitParabolid.C
+    markInterfaceRegion.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef leastSquareFitParabolid_H
-#define leastSquareFitParabolid_H
+#ifndef markInterfaceRegion_H
+#define markInterfaceRegion_H
 
 #include "fvMesh.H"
 #include "volFields.H"
 #include "surfaceFields.H"
-#include "OFstream.H"
+#include "globalIndex.H"
+#include "Map.H"
+#include "zoneDistribute.H"
+#include "dimensionedScalar.H"
 
 
-
-#include "multiDimPolyFitter.H"
-#include "cartesianCS.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,67 +53,57 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class leastSquareFitParabolid Declaration
+                        Class markInterfaceRegion Declaration
 \*---------------------------------------------------------------------------*/
 
-class leastSquareFitParabolid
+class markInterfaceRegion
 {
 
 
-
 private:
+
     // Private data
-    multiDimPolyFitter<scalar> polyFitter_;
 
-    Vector<label> geomDir_;
+    // reference to mesh
+    const fvMesh& mesh_;
 
-    label nDims_;
+    // stores the coupled boundary points which have to be synced
+    labelList coupledBoundaryPoints_;
 
-    cartesianCS makeLocalCoordSystem
-    (
-        const point& basePoint,
-        const vector& normal
-    );
+    //- Return patch of all coupled faces.
+    autoPtr<indirectPrimitivePatch> coupledFacesPatch() const;
+
+
+
 
 
 public:
 
     // Constructors
 
-        //- Construct from fvMesh and globalIndex
-        leastSquareFitParabolid
-        (
-            const Vector<label> geomDir,
-            const Vector<label> explicitDim
-        );
+    //- Construct from fvMesh and a scalarField
+    //  Length of scalarField should equal number of mesh points
+    markInterfaceRegion(const fvMesh& mesh);
 
 
     // Member functions
 
-        //- return the fit parameters
-        scalarField fitParaboloid
-        (
-            const point& centre,
-            const vector& normal,
-            const vectorField& positions
-        );
+    //void markCellsNearSurf(const boolList& interfaceCells,const label neiRingLevel);
 
-        //- return the fit parameters
-        scalarField fitParaboloid
-        (
-            const point& centre,
-            const vector& normal,
-            const vectorField& positions,
-            const scalarField& weight
-        );
+    void markCellsNearSurf
+    (
+        const boolList& interfaceCells,
+        const label neiRingLevel,
+        boolList& nextToInterface,
+        volScalarField& cellDistLevel
+    );
 
-        label nCoeffs()
-        {
-            return polyFitter_.nCoeffs();
-        } 
-
-
-
+    void markCellsNearSurf
+    (
+        const boolList& interfaceCells,
+        const label neiRingLevel,
+        boolList& nextToInterface
+    );
 
 };
 

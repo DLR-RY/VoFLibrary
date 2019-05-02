@@ -134,6 +134,9 @@ class zoneDistribute
         //- Construct from fvMesh
         zoneDistribute(const fvMesh&);
 
+    // Selectors
+        static zoneDistribute& New(const fvMesh&);
+
         // Member functions
 
         //- updates the stencil with boolList the size has to match

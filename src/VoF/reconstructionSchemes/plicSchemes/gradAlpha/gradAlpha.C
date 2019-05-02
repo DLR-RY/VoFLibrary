@@ -99,7 +99,7 @@ Foam::reconstruction::gradAlpha::gradAlpha
     interfaceNormal_(fvc::grad(alpha1)),
     vof2IsoTol_(readScalar(modelDict().lookup("vof2IsoTol" ))),
     surfCellTol_(readScalar(modelDict().lookup("surfCellTol" ))),
-    exchangeFields_(mesh_),
+    exchangeFields_(zoneDistribute::New(mesh_)),
     sIterPLIC_(mesh_,surfCellTol_)
     
 
@@ -126,6 +126,13 @@ Foam::reconstruction::gradAlpha::~gradAlpha()
 // ************************************************************************* //
 void Foam::reconstruction::gradAlpha::reconstruct()
 {
+    bool uptodate = alreadyReconstructed();
+
+    if(uptodate)
+    {
+        return;
+    }
+    
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes

@@ -83,6 +83,8 @@ protected:
 
         bool writeVTK_;
 
+        Pair<label> timeIndexAndIter_;
+
         //- Write face points to .vtk files e.g. for visualisation in Paraview
         void isoFacesToFile
         (
@@ -100,6 +102,8 @@ protected:
                 const word filNam,
                 const word filDir
         ) const;
+
+        bool alreadyReconstructed();
 
 
 

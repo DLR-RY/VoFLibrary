@@ -194,7 +194,12 @@ Foam::reconstruction::isoRDF::~isoRDF()
 // ************************************************************************* //
 void Foam::reconstruction::isoRDF::reconstruct()
 {
+    bool uptodate = alreadyReconstructed();
 
+    if(uptodate)
+    {
+        return;
+    }
 
     // sets interfaceLabels_ and interfaceCells_
     // update communication for RDF

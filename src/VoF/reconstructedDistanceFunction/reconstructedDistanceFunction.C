@@ -28,6 +28,7 @@ License
 #include "wedgePolyPatch.H"
 #include "indexedOctree.H"
 #include "treeDataPoint.H"
+#include "alphaContactAngleFvPatchScalarField.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -222,7 +223,7 @@ Foam::reconstructedDistanceFunction::reconstructedDistanceFunction
               mesh.time().timeName(),
               mesh,
               IOobject::NO_READ,
-              IOobject::AUTO_WRITE
+              IOobject::NO_WRITE
           ),
           mesh,
           dimensionedScalar("cellDistLevel_",dimless,-1),
@@ -325,8 +326,8 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
         if(reconDistFunc.boundaryField().types()[patchI] == "calculated")
         {
             const polyPatch pp = mesh_.boundaryMesh()[patchI];
-            fvPatchScalarField& pHeight = reconDistFunc.boundaryFieldRef()[patchI];
-            forAll(pHeight, i)
+            fvPatchScalarField& pRDF = reconDistFunc.boundaryFieldRef()[patchI];
+            forAll(pRDF, i)
             {
                 const label& pCellI = pp.faceCells()[i];
 
@@ -364,18 +365,18 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 
                     if (avgWeight != 0)
                     {
-                        pHeight[i] = averageDist / avgWeight;
+                        pRDF[i] = averageDist / avgWeight;
                     }
                     else
                     {
-                        pHeight[i] = 0;
+                        pRDF[i] = 0;
                     } 
 
 
                 }
                 else
                 {
-                    pHeight[i] = 0;
+                    pRDF[i] = 0;
                 } 
             }
         }
@@ -542,7 +543,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
 {
     volScalarField& reconDistFunc = *this;
 
-    Random rndGen(17301893);
+    Random rndGen(1234567);
 
     // Slightly extended bb. Slightly off-centred just so on symmetric
     // geometry there are less face/edge aligned items.
@@ -551,9 +552,9 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
         treeBoundBox(centre).extend(rndGen, 1e-4)
     );
 
-    bb.min() -= point(ROOTVSMALL, ROOTVSMALL, ROOTVSMALL);
-    bb.max() += point(ROOTVSMALL, ROOTVSMALL, ROOTVSMALL);
 
+    bb.min() -= point(1e-8, 1e-8, 1e-8);
+    bb.max() += point(1e-8, 1e-8, 1e-8);
 
     indexedOctree<treeDataPoint> surfaceTree
     (
@@ -574,10 +575,18 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
             const point& p = mesh_.C()[celli];
             pointIndexHit pHit =  surfaceTree.findNearest (p, GREAT);
             const label idx = pHit.index();
-            vector n = -normals[idx];
-            n /= mag(n);
-            scalar dist = (centre[pHit.index()]-p) & n;
-            reconDistFunc[celli] = dist;
+            if(idx == -1)
+            {
+                reconDistFunc[celli] = 0;
+            }
+            else
+            {
+                vector n = -normals[idx];
+                n /= mag(n);
+                scalar dist = (centre[pHit.index()]-p) & n;
+                reconDistFunc[celli] = dist;
+            }
+
         } 
         else
         {
@@ -586,6 +595,46 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
     }
 
     return reconDistFunc;
+}
+
+void Foam::reconstructedDistanceFunction::updateContactAngle
+(
+    const volScalarField& alpha,
+    const volVectorField& U,
+    surfaceVectorField::Boundary& nHatb
+)
+{
+    scalar convertToRad = Foam::constant::mathematical::pi/180.0;
+
+    const fvMesh& mesh = alpha.mesh();
+    const volScalarField::Boundary& abf = alpha.boundaryField();
+    volScalarField::Boundary& RDFbf = this->boundaryFieldRef();
+
+    const fvBoundaryMesh& boundary = mesh.boundary();
+
+    forAll(boundary, patchi)
+    {
+        if (isA<alphaContactAngleFvPatchScalarField>(abf[patchi]))
+        {
+            alphaContactAngleFvPatchScalarField& acap =
+                const_cast<alphaContactAngleFvPatchScalarField&>
+                (
+                    refCast<const alphaContactAngleFvPatchScalarField>
+                    (
+                        abf[patchi]
+                    )
+                );
+
+            fvsPatchVectorField& nHatp = nHatb[patchi];
+            const scalarField theta
+            (
+                convertToRad*acap.theta(U.boundaryField()[patchi],nHatp)
+            );
+            
+            RDFbf[patchi] = 1/acap.patch().deltaCoeffs()*cos(theta) +  RDFbf[patchi].patchInternalField();
+
+        }
+    }
 }
 
 // ************************************************************************* //

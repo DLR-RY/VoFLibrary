@@ -165,6 +165,37 @@ Foam::scalarField Foam::leastSquareFitParabolid::fitParaboloid
     return fitData;
 }
 
+Foam::scalarField Foam::leastSquareFitParabolid::fitParaboloid
+(
+    const point& centre,
+    const vector& normal,
+    const vectorField& positions,
+    const scalarField& weight
+)
+{
+    cartesianCS localCoord = makeLocalCoordSystem
+    (
+        centre,
+        normal
+    );
+    vectorField localPositions (localCoord.localPosition(positions));
+
+    List<scalar> listValue(localPositions.size());
+    forAll(listValue,i)
+    {
+        listValue[i] = localPositions[i].z();
+    }
+    
+    scalarField fitData = polyFitter_.fitData
+    (
+        localPositions,
+        listValue,
+        weight
+    );
+
+    return fitData;
+}
+
 // Foam::Map < Foam::vector >  Foam::leastSquareFitParabolid::grad
 // (
 //     const Map <List<vector> >& positions,

@@ -90,6 +90,39 @@ Foam::zoneDistribute::zoneDistribute(const fvMesh& mesh)
 {
 
 }
+// * * * * * * * * * * * * * * * * Selectors  * * * * * * * * * * * * * * //
+Foam::zoneDistribute& Foam::zoneDistribute::New(const fvMesh& mesh)
+{
+    bool found = mesh.thisDb().foundObject<zoneDistribute>
+    (
+        zoneDistribute::typeName
+    ); 
+    zoneDistribute* ptr = nullptr;
+
+    if(found)
+    {
+        ptr = mesh.thisDb().getObjectPtr<zoneDistribute>
+        (
+            zoneDistribute::typeName
+        );
+
+        return *ptr;
+    }
+
+    // if (meshObject::debug)
+    // {
+    //     Pout<< "MeshObject::New(const " << Mesh::typeName
+    //         << "&, ...) : constructing " << Type::typeName
+    //         << " for region " << mesh.name() << endl;
+    // }
+
+    zoneDistribute* objectPtr = new zoneDistribute(mesh);
+
+    regIOobject::store(static_cast<zoneDistribute*>(objectPtr));
+
+    return *objectPtr;
+}
+ 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

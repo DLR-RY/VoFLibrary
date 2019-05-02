@@ -299,7 +299,7 @@ Foam::reconstruction::plicRDF::plicRDF
     iteration_(modelDict().lookupOrDefault("iterations" ,5)),
     interpolateNormal_(modelDict().lookupOrDefault("interpolateNormal" ,true)),
     RDF_(mesh_),
-    exchangeFields_(mesh_),
+    exchangeFields_(zoneDistribute::New(mesh_)),
     sIterPLIC_(mesh_,surfCellTol_)
 
 {
@@ -362,6 +362,12 @@ Foam::reconstruction::plicRDF::~plicRDF()
 // ************************************************************************* //
 void Foam::reconstruction::plicRDF::reconstruct()
 {
+    bool uptodate = alreadyReconstructed();
+
+    if(uptodate)
+    {
+        return;
+    }
 
     if (mesh_.topoChanging())
     {
@@ -429,6 +435,11 @@ void Foam::reconstruction::plicRDF::reconstruct()
         Map<scalar> residual;
         Map<scalar> avgAngle;
         //if(iter < (iteration_-1))
+            // Cell gradient of alpha
+
+        surfaceVectorField::Boundary nHatb = mesh_.Sf().boundaryField();
+        nHatb *= 1/(mesh_.magSf().boundaryField());
+
         {
             RDF_.constructRDF
             (
@@ -438,6 +449,7 @@ void Foam::reconstruction::plicRDF::reconstruct()
                 exchangeFields_,
                 false
             );
+            RDF_.updateContactAngle(alpha1_,U_,nHatb);
             gradSurf(RDF_);
             calcResidual(residual,avgAngle);
         }
@@ -512,6 +524,12 @@ void Foam::reconstruction::plicRDF::reconstruct()
 
 void Foam::reconstruction::plicRDF::mapAlphaField()
 {
+    // without it we seem to get a race condition
+    mesh_.C();
+    normal_;
+    centre_;
+    alpha1_;
+
     cutCellPLIC cutCell(mesh_);
     
     

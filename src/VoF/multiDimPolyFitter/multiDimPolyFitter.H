@@ -92,6 +92,13 @@ public:
     void fillMatrix
     (
         const scalarField& polyTerms,
+        const T& value,
+        const scalar weight
+    );
+
+    void fillMatrix
+    (
+        const scalarField& polyTerms,
         scalarSymmetricSquareMatrix& A
     );
 
@@ -100,6 +107,14 @@ public:
     (
         const List<scalarField>& listPolyTerms,
         const List<T>& listValue
+    );
+
+    // fit data
+    Field<T> fitData
+    (
+        const List<scalarField>& listPolyTerms,
+        const List<T>& listValue,
+        const List<scalar>& listWeight
     );
 
     // computer inverse
@@ -120,6 +135,14 @@ public:
     (
         const List<vector>& positions,
         const List<T>& listValue
+    );
+
+        // fit data
+    Field<T> fitData
+    (
+        const List<vector>& positions,
+        const List<T>& listValue,
+        const List<scalar>& listWeight
     );
 
     // compute inverse

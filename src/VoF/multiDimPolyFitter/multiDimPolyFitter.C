@@ -80,6 +80,32 @@ template<class T>
 void Foam::multiDimPolyFitter<T>::fillMatrix
 (
     const scalarField& polyTerms,
+    const T& value,
+    const scalar weight
+)
+{
+    label size = A_.n();
+
+    //simple matrix is a square
+    scalar tmpValue = 0;
+    for(label i=0;i<size;i++) // col 
+    {
+        A_.source()[i] += polyTerms[i]*value*weight;
+        scalar* __restrict luMatrixi = A_[i];
+        tmpValue = polyTerms[i];
+        for(label j=0;j<size;j++) // row
+        {
+            luMatrixi[j] += tmpValue*polyTerms[j]*weight;
+        }
+    }
+
+}
+
+
+template<class T>
+void Foam::multiDimPolyFitter<T>::fillMatrix
+(
+    const scalarField& polyTerms,
     scalarSymmetricSquareMatrix& A
 )
 {
@@ -112,6 +138,41 @@ Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
             (
                 listPolyTerms[i],
                 listValue[i]
+            );
+        }
+        // Solve the matrix using Gaussian elimination with pivoting
+        return A_.LUsolve();
+    }
+    else
+    {
+        FatalErrorInFunction
+        << "size of listPolyTerms: " << listPolyTerms.size()
+        << "size of listValues is:" <<  listValue.size()
+        << "they have to match" 
+        << exit(FatalError);
+        return Field<T>(0);
+    }
+}
+
+template<class T>
+Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
+(
+    const List<scalarField>& listPolyTerms,
+    const List<T>& listValue,
+    const List<scalar>& listWeight
+)
+{ 
+    // operator= does not work
+    resetMatrix();
+    if(listPolyTerms.size() == listValue.size())
+    {
+        forAll(listPolyTerms,i)
+        {
+            fillMatrix
+            (
+                listPolyTerms[i],
+                listValue[i],
+                listWeight[i]
             );
         }
         // Solve the matrix using Gaussian elimination with pivoting
@@ -208,6 +269,40 @@ Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
     return A_.LUsolve();
 
 }
+
+template<class T>
+Foam::Field<T> Foam::multiDimPolyFitter<T>::fitData
+(
+    const List<vector>& positions,
+    const List<T>& listValue,
+    const List<scalar>& listWeight
+)
+{ 
+    // operator= does not work
+    if(positions.size() != listValue.size())
+    {
+        FatalErrorInFunction
+        << "size of positions and listValues don't match" << nl
+        << "size of positions is: " << positions.size()  << nl
+        << "size of listValues is: " <<  listValue.size() << nl 
+        << exit(FatalError);
+    }
+    resetMatrix();
+
+    forAll(positions,i)
+    {
+        fillMatrix
+        (
+            polyFunc_->termValues(positions[i]),
+            listValue[i],
+            listWeight[i]
+        );
+    }
+    // Solve the matrix using Gaussian elimination with pivoting
+    return A_.LUsolve();
+
+}
+
 
 template<class T>
 Foam::scalarSymmetricSquareMatrix Foam::multiDimPolyFitter<T>::computeInverse
