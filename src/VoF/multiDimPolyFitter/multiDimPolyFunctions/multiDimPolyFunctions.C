@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by

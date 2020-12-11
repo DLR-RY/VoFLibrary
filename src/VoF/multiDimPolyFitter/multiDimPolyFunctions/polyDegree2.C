@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -80,6 +80,7 @@ nDims_(0)
 Foam::scalar Foam::polyDegree2::value(const vector& vec)
 {
     // size has to be 4
+    notImplemented("polyDegree2::value is not implemented");
     return coeffs_[0] + coeffs_[1]*vec.x() + coeffs_[2]*vec.y() + coeffs_[3]*vec.y();
 }
 
@@ -95,7 +96,7 @@ Foam::scalar Foam::polyDegree2::value(const vector& vec)
 
 const Foam::scalarField& Foam::polyDegree2::termValues(const vector& vec)
 {
-    // c0 + c1*x + c2*y + c3*z + c4*x^2 + c5*y^2 + c6*z^2 + c7*x*y  + c8*x*z + c9*y*z    
+    // c0 + c1*x + c2*y + c3*z + c4*x^2 + c5*y^2 + c6*z^2 + c7*x*y  + c8*x*z + c9*y*z
     termValues_[0]=1;
     label dimCounter = 0;
     forAll(geomDir_,i)
@@ -118,7 +119,7 @@ const Foam::scalarField& Foam::polyDegree2::termValues(const vector& vec)
     }
     else if(nDims_ == 2)
     {
-   
+
         bool firstDir = true;
         forAll(geomDir_,i)
         {

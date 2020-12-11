@@ -1,23 +1,30 @@
 /*---------------------------------------------------------------------------*\
-|             isoAdvector | Copyright (C) 2016 Johan Roenby, DHI              |
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 
 License
-    This file is part of IsoAdvector, which is an unofficial extension to
-    OpenFOAM.
+    This file is part of OpenFOAM.
 
-    IsoAdvector is free software: you can redistribute it and/or modify it
+    OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    IsoAdvector is distributed in the hope that it will be useful, but WITHOUT
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
 
     You should have received a copy of the GNU General Public License
-    along with IsoAdvector. If not, see <http://www.gnu.org/licenses/>.
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
 
@@ -26,25 +33,27 @@ License
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::cutCellIso::cutCellIso(const fvMesh& mesh, scalarField& f)
-    : cutCell(mesh),
-      mesh_(mesh),
-      cellI_(-1),
-      f_(f),
-      cutValue_(0),
-      cutFace_(cutFaceIso(mesh_, f_)),
-      cutFaceCentres_(10),
-      cutFaceAreas_(10),
-      isoFaceEdges_(10),
-      facePoints_(10),
-      faceCentre_(vector::zero),
-      faceArea_(vector::zero),
-      subCellCentre_(vector::zero),
-      subCellVolume_(-10),
-      VOF_(-10),
-      cellStatus_(-1)
+:
+    cutCell(mesh),
+    mesh_(mesh),
+    cellI_(-1),
+    f_(f),
+    cutValue_(0),
+    cutFace_(cutFaceIso(mesh_, f_)),
+    cutFaceCentres_(10),
+    cutFaceAreas_(10),
+    isoFaceEdges_(10),
+    facePoints_(10),
+    faceCentre_(vector::zero),
+    faceArea_(vector::zero),
+    subCellCentre_(vector::zero),
+    subCellVolume_(-10),
+    VOF_(-10),
+    cellStatus_(-1)
 {
     clearStorage();
 }
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -54,7 +63,6 @@ Foam::label Foam::cutCellIso::calcSubCell
     const scalar cutValue
 )
 {
-
     // resets data members
     clearStorage();
     cellI_ = cellI;
@@ -67,10 +75,8 @@ Foam::label Foam::cutCellIso::calcSubCell
     label nFaceBelowInterface = 0;
 
     // loop over cell faces
-    forAll(c, fi)
+    for (const label facei : c)
     {
-        const label facei = c[fi];
-
         const label faceStatus = cutFace_.calcSubFace(facei, cutValue_);
 
         if (faceStatus == 0) // face is cut
@@ -106,11 +112,11 @@ Foam::label Foam::cutCellIso::calcSubCell
             faceArea_,
             faceCentre_
         );
-        
+
         // In the rare but occuring cases where a cell is only touched at a
         // point or a line the isoFaceArea_ will have zero length and here the
         // cell should be treated as either completely empty or full.
-        if (mag(faceArea_) < 10*SMALL)
+        if (mag(faceArea_) < ROOTVSMALL)
         {
             if (nFaceBelowInterface == 0)
             {
@@ -144,12 +150,6 @@ Foam::label Foam::cutCellIso::calcSubCell
             subCellVolume_
         );
 
-        // switch orientation that it points in the gas phase
-        // if ((faceArea_ & (faceCentre_ - subCellCentre_)) < 0)
-        // {
-        //     faceArea_ *= (-1);
-        // }
-
         VOF_ = subCellVolume_ / mesh_.V()[cellI_];
     }
     else if (fullyAbove) // cell fully above isosurface
@@ -167,21 +167,23 @@ Foam::label Foam::cutCellIso::calcSubCell
         VOF_ = 1;
     }
 
-
     return cellStatus_;
 }
 
-Foam::point Foam::cutCellIso::subCellCentre()
+
+const Foam::point& Foam::cutCellIso::subCellCentre() const
 {
     return subCellCentre_;
 }
 
-Foam::scalar Foam::cutCellIso::subCellVolume()
+
+Foam::scalar Foam::cutCellIso::subCellVolume() const
 {
     return subCellVolume_;
 }
 
-Foam::DynamicList<Foam::point> Foam::cutCellIso::facePoints()
+
+const Foam::DynamicList<Foam::point>& Foam::cutCellIso::facePoints()
 {
     if (facePoints_.size() == 0)
     {
@@ -198,29 +200,36 @@ Foam::DynamicList<Foam::point> Foam::cutCellIso::facePoints()
     return facePoints_;
 }
 
-Foam::point Foam::cutCellIso::faceCentre()
+
+const Foam::point& Foam::cutCellIso::faceCentre() const
 {
     return faceCentre_;
 }
 
-Foam::vector Foam::cutCellIso::faceArea()
+
+const Foam::vector& Foam::cutCellIso::faceArea() const
 {
     return faceArea_;
 }
-Foam::label Foam::cutCellIso::cellStatus()
+
+
+Foam::label Foam::cutCellIso::cellStatus() const
 {
     return cellStatus_;
 }
 
-Foam::scalar Foam::cutCellIso::VolumeOfFluid()
+
+Foam::scalar Foam::cutCellIso::VolumeOfFluid() const
 {
     return VOF_;
 }
+
 
 Foam::scalar Foam::cutCellIso::cutValue() const
 {
     return cutValue_;
 }
+
 
 void Foam::cutCellIso::clearStorage()
 {
@@ -237,5 +246,6 @@ void Foam::cutCellIso::clearStorage()
     VOF_ = -10;
     cellStatus_ = -1;
 }
+
 
 // ************************************************************************* //

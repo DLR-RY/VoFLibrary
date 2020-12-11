@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,60 +26,49 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "impPlane.H"
+#include "sphereImplicitFunction.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impPlane, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impPlane, dict);
+        defineTypeNameAndDebug(sphereImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            sphereImplicitFunction,
+            dict
+        );
     }
-
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunction::impPlane::impPlane
+Foam::implicitFunctions::sphereImplicitFunction::sphereImplicitFunction
 (
-    const vector centre,
-    const vector normal
+    const point& origin,
+    const scalar radius,
+    const scalar scale
 )
 :
-    centre_(centre),
-    normal_(normal)
-{
+    origin_(origin),
+    radius_(radius),
+    scale_(scale)
+{}
 
-}
 
-
-Foam::implicitFunction::impPlane::impPlane
+Foam::implicitFunctions::sphereImplicitFunction::sphereImplicitFunction
 (
     const dictionary& dict
 )
 :
-    centre_(dict.lookup("centre")),
-    normal_(dict.lookup("normal"))
-{
-    normal_ /= mag(normal_);
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impPlane::~impPlane()
+    origin_(dict.get<point>("origin")),
+    radius_(dict.get<scalar>("radius")),
+    scale_(dict.lookupOrDefault<scalar>("scale" ,1))
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

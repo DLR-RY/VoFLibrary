@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,7 +25,7 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 
 Class
     Foam::cutFacePLIC
@@ -37,9 +45,8 @@ Description
 
     \endverbatim
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
-    Johan Roenby, DHI, all rights reserved.
+
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     cutFacePLIC.C
@@ -61,12 +68,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class cutFacePLICs Declaration
+                        Class cutFacePLIC Declaration
 \*---------------------------------------------------------------------------*/
 
 class cutFacePLIC
 :
-        public cutFace
+    public cutFace
 {
     // Private data
 
@@ -93,10 +100,11 @@ class cutFacePLIC
 
         //- A face status label taking one of the values:
         //
-        //  - -1: face is fully below the isosurface
-        //  -  0: face is cut, i.e. has values larger and smaller than isoValue_
-        //  - +1: face is fully above the isosurface
+        //   -1: face is fully below the PLICsurface
+        //    0: face is cut, i.e. has values larger and smaller than cutValue_
+        //   +1: face is fully above the PLICsurface
         label faceStatus_;
+
 
 public:
 
@@ -117,23 +125,20 @@ public:
             const vector& base
         );
 
-        //- returns centre of cutted face
-        point subFaceCentre();
+        //- Returns centre of cutted face
+        const point& subFaceCentre() const;
 
-        //- returns area vector of cutted face
-        vector subFaceArea();
+        //- Returns area vector of cutted face
+        const vector& subFaceArea() const;
 
-        //- returns the cut edge of the cutted face
-        DynamicList<point>& subFacePoints();
+        //- Returns the cut edge of the cutted face
+        const DynamicList<point>& subFacePoints() const;
 
-        //- returns point of the face in sorted of cutted face
-        DynamicList<point>& surfacePoints();
+        //- Returns point of the face in sorted of cutted face
+        const DynamicList<point>& surfacePoints() const;
 
-        //- resets internal variables
+        //- Resets internal variables
         void clearStorage();
-        
-
-        
 };
 
 

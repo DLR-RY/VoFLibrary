@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,7 +25,7 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 
 Class
     Foam::cutFaceAdvect
@@ -34,8 +42,8 @@ Description
 
     \endverbatim
 
-Author
-    Johan Roenby, DHI, all rights reserved.
+
+    Original code supplied by Johan Roenby, DHI (2016)
 
 SourceFiles
     cutFaceAdvect.C
@@ -57,7 +65,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class cutFaceAdvects Declaration
+                        Class cutFaceAdvect Declaration
 \*---------------------------------------------------------------------------*/
 
 class cutFaceAdvect
@@ -74,7 +82,7 @@ class cutFaceAdvect
         //- Mesh whose cells and faces to cut at their intersection with an isoface
         const fvMesh& mesh_;
 
-        //- reference to VoF field
+        //- Reference to VoF field
         const volScalarField& alpha1_;
 
         //- Storage for centre of subface
@@ -100,12 +108,12 @@ class cutFaceAdvect
 
         //- A face status label taking one of the values:
         //
-        //  - -1: face is fully below the isosurface
-        //  -  0: face is cut, i.e. has values larger and smaller than isoValue_
-        //  - +1: face is fully above the isosurface
+        //   -1: face is fully below the isosurface
+        //    0: face is cut, i.e. has values larger and smaller than isoValue_
+        //   +1: face is fully above the isosurface
         label faceStatus_;
 
-        //- write faces to vtk files
+        //- Write faces to vtk files
         void isoFacesToFile
         (
             const DynamicList<List<point>>& isoFacePts,
@@ -113,24 +121,28 @@ class cutFaceAdvect
             const word fileDir
         ) const;
 
+
   public:
+
     // Constructors
 
         //- Construct from fvMesh and a scalarField
         //  Length of scalarField should equal number of mesh points
         cutFaceAdvect(const fvMesh& mesh, const volScalarField& alpha1);
 
-        // Member functions
+    // Member functions
 
-        //- calculates cut centre and cut area (plicReconstruction) and return facestatus
-        label  calcSubFace
+        //- Calculates cut centre and cut area (plicReconstruction) and return
+        //  face status
+        label calcSubFace
         (
             const label& faceI,
             const vector& normal,
             const vector& base
         );
 
-        //- calculates cut centre and cut area (iso reconstruction) and return facestatus
+        //- Calculates cut centre and cut area (iso reconstruction) and return
+        //  face status
         label calcSubFace
         (
             const face& f,
@@ -139,7 +151,8 @@ class cutFaceAdvect
             const scalar& cutValue
         );
 
-        //- calculates cut centre and cut area (iso reconstruction) and return facestatus
+        //- Calculates cut centre and cut area (iso reconstruction) and return
+        //  face status
         label calcSubFace
         (
             const label& faceI,
@@ -148,7 +161,7 @@ class cutFaceAdvect
         );
 
         //- Calculate time integrated flux for a face
-        scalar timeIntegratedFlux
+        scalar timeIntegratedFaceFlux
         (
             const label faceI,
             const vector& x0,
@@ -160,10 +173,10 @@ class cutFaceAdvect
         );
 
         //- Calculate time integrated flux for a face
-        scalar timeIntegratedFlux
+        scalar timeIntegratedFaceFlux
         (
             const label faceI,
-            const scalarField times,
+            const scalarField& times,
             const scalar Un0,
             const scalar dt,
             const scalar phi,
@@ -200,15 +213,15 @@ class cutFaceAdvect
             scalar& intQuadArea
         ) const;
 
-        //- get cutPoints of face
+        //- Get cutPoints of face
         void cutPoints
         (
-             const label& faceI,
-             const scalar f0,
-             DynamicList<point>& cutPoints
+            const label& faceI,
+            const scalar f0,
+            DynamicList<point>& cutPoints
          );
 
-        //- get cutPoints of face
+        //- Get cutPoints of face
         void cutPoints
         (
             const pointField& pts,
@@ -217,19 +230,19 @@ class cutFaceAdvect
             DynamicList<point>& cutPoints
         );
 
-        //- returns centre of cutted face
-        point subFaceCentre();
+        //- Returns centre of cutted face
+        const point& subFaceCentre() const;
 
-        //- returns area vector of cutted face
-        vector subFaceArea();
+        //- Returns area vector of cutted face
+        const vector& subFaceArea() const;
 
-        //- returns the cut edge of the cutted face
-        DynamicList<point>& subFacePoints();
+        //- Returns the cut edge of the cutted face
+        const DynamicList<point>& subFacePoints() const;
 
-        //- returns point of the cutted face in sorted order
-        DynamicList<point>& surfacePoints();
+        //- Returns point of the cutted face in sorted order
+        const DynamicList<point>& surfacePoints() const;
 
-        //- resets internal variables
+        //- Resets internal variables
         void clearStorage();
 };
 

@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::plicRDF
+    Foam::reconstruction::plicRDF
 
 Description
     Reconstructs an interface (centre and normal vector) consisting of planes
@@ -37,8 +43,7 @@ Description
 
     \endverbatim
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     plicRDF.C
@@ -53,13 +58,9 @@ SourceFiles
 #include "volFields.H"
 #include "dimensionedScalar.H"
 #include "autoPtr.H"
-
-
 #include "surfaceIteratorPLIC.H"
 #include "reconstructedDistanceFunction.H"
 #include "zoneDistribute.H"
-
-
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -70,55 +71,48 @@ namespace reconstruction
 {
 
 /*---------------------------------------------------------------------------*\
-                Class plicRDF Declaration
+                           Class plicRDF Declaration
 \*---------------------------------------------------------------------------*/
 
 class plicRDF
-    : public reconstructionSchemes
+:
+    public reconstructionSchemes
 {
 
 private:
+
+    // Private Data
 
         //- Reference to mesh
         const fvMesh& mesh_;
 
         //- Interpolation object from cell centres to points
-        //Map<vector> interfaceNormal_;
         DynamicField<vector> interfaceNormal_;
 
-        
 
-
-
-        
     // Switches and tolerances. Tolerances need to go into toleranceSwitches
 
-
         //- Tolerance for search of isoFace giving specified VOF value
-        scalar vof2IsoTol_;
+        scalar isoFaceTol_;
 
         //- Tolerance for marking of surface cells:
         //  Those with surfCellTol_ < alpha1 < 1 - surfCellTol_
         scalar surfCellTol_;
 
-        //  tolerance
+        //- Tolerance
         scalar tol_;
 
-        //  relative tolerance
+        //- Relative tolerance
         scalar relTol_;
 
-        // number of times that the interface ist reconstructed has to be bigger than 2
+        //- Number of times that the interface ist reconstructed has to be bigger than 2
         label iteration_;
 
-        // interpolated normal from previous time step
+        //- Interpolated normal from previous time step
         bool interpolateNormal_;
 
-
-        // calculates the RDF function
-        reconstructedDistanceFunction RDF_;
-
-        // provides stencil and map
-        zoneDistribute& exchangeFields_;
+        //- Calculates the RDF function
+        reconstructedDistanceFunction& RDF_;
 
         //- surfaceIterator finds the plane centre for specified VOF value
         surfaceIteratorPLIC sIterPLIC_;
@@ -128,24 +122,31 @@ private:
 
     // Private Member Functions
 
-        //- Disallow copy construct
-        plicRDF(const plicRDF&);
+        //- No copy construct
+        plicRDF(const plicRDF&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const plicRDF&);
+        //- No bitwise assignment
+        void operator=(const plicRDF&) = delete;
 
+        //- set initial normals by interpolation from the previous
+        //  timestep or with the Young method
         void setInitNormals(bool interpolate);
 
+        //- compute gradient at the surfaces
         void gradSurf(const volScalarField& phi);
 
+        //- compute the normal residuals
         void calcResidual
         (
             Map<scalar>& normalResidual,
             Map<scalar>& avgAngle
         );
 
+        //- interpolation of the normals from the previous time step
         void interpolateNormal();
 
+        //- update boundary points is case of a specified contact angle
+        void centreAndNormalBC();
 
 
 public:
@@ -153,33 +154,33 @@ public:
     //- Runtime type information
     TypeName("plicRDF");
 
-
-    // Constructors
-
-        //- Construct from components
-        plicRDF
-        (
-                volScalarField& alpha1,
-                const surfaceScalarField& phi,
-                const volVectorField& U,
-                dictionary& dict
-        );
+    //- Construct from components
+    plicRDF
+    (
+        volScalarField& alpha1,
+        const surfaceScalarField& phi,
+        const volVectorField& U,
+        const dictionary& dict
+    );
 
 
     //- Destructor
-    virtual ~plicRDF();
+    virtual ~plicRDF() = default;
 
-    // reconstruct  interface
-    virtual void reconstruct();
 
-    virtual void mapAlphaField();
+    // Member Functions
 
+        //- Reconstruct  interface
+        virtual void reconstruct(bool forceUpdate = true);
+
+        //- Map VoF Field in case of refinement
+        virtual void mapAlphaField() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End reconstructionSchemes Foam
+} // End namespace reconstruction
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -23,8 +23,8 @@ solvers
         nAlphaSubCycles 1;
         cAlpha          1;
 
-	advectionScheme isoAdvector;
-	reconstructionSchemes RECONSCHEME;
+	advectionScheme isoAdvection;
+	reconstructionScheme RECONSCHEME;
 
 	vof2IsoTol 1e-8;
 	surfCellTol 1e-8;

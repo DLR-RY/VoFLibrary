@@ -2,7 +2,7 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
+    This file is part of the VoFLibrary source code library, which is an
 	unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
@@ -22,7 +22,7 @@ Application
     initAlphaField
 
 Description
-    Uses cellCellIso to create a volume fraction field from either a cylinder, 
+    Uses cellCellIso to create a volume fraction field from either a cylinder,
     a sphere or a plane.
 
 Author
@@ -46,7 +46,7 @@ Author
 #include "cutFace.H"
 #include "cutCell.H"
 
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 #include "cutCellIso.H"
 
 
@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 
     Info<< "Reading initAlphaFieldDict" << endl;
 
-    Foam::autoPtr<Foam::implicitFunctions> func = implicitFunctions::New
+    Foam::autoPtr<Foam::implicitFunction> func = implicitFunction::New
     (
            initAlphaFieldDict.get<word>("function"),
            initAlphaFieldDict
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
 
     // alpha1.correctBoundaryConditions();
 
-	
+
 	ISstream::defaultPrecision(18);
 
     if(invert)
@@ -286,14 +286,14 @@ int main(int argc, char *argv[])
         alpha1 = scalar(1) - alpha1;
         // alpha1.correctBoundaryConditions();
     }
-    
+
     alpha1.write(); //Writing volScalarField alpha1
 
     const scalarField& alpha = alpha1.internalField();
 	Info << "sum(alpha*V) = " << gSum(mesh.V()*alpha)
 	 << ", 1-max(alpha1) = " << 1 - gMax(alpha)
 	 << "\t min(alpha1) = " << gMin(alpha) << endl;
-	
+
     Info<< "End\n" << endl;
 
     return 0;

@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,23 +25,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::implicitFunction::impParaboloid
+    Foam::implicitFunctions::planeImplicitFunction
 
 Description
-    creates a paraboloid
+    creates a plane
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    impParaboloid.C
+    planeImplicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef impParaboloid_H
-#define impParaboloid_H
+#ifndef implicitFunction_planeImplicitFunction_H
+#define implicitFunction_planeImplicitFunction_H
 
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 #include "mathematicalConstants.H"
 
 
@@ -43,70 +48,79 @@ SourceFiles
 
 namespace Foam
 {
-namespace implicitFunction
+namespace implicitFunctions
 {
-// Forward declaration of classes
 
 /*---------------------------------------------------------------------------*\
-                           Class impParaboloid Declaration
+                    Class planeImplicitFunction Declaration
 \*---------------------------------------------------------------------------*/
 
-class impParaboloid
+class planeImplicitFunction
 :
-    public implicitFunctions
+    public implicitFunction
 {
 private:
 
     // Private Member Data
 
         //- ax^2 + bx*y + cy^2
-        vector coeffs_;
+        //- Reference point
+        vector origin_;
 
+        //- Normal vector
+        vector normal_;
 
 
     // Private Member Functions
 
-        //- Disallow default bitwise copy construct
-        impParaboloid(const impParaboloid&);
+        //- No copy construct
+        planeImplicitFunction(const planeImplicitFunction&);
 
-        //- Disallow default bitwise assignment
-        void operator=(const impParaboloid&);
+        //- No assignment
+        void operator=(const planeImplicitFunction&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("paraboloid");
+    TypeName("plane");
 
 
     // Constructors
 
         //- Construct from components
-        impParaboloid(const vector coeffs);
+        planeImplicitFunction(const vector& origin, const vector& normal);
 
         //- Construct from dictionary (used by implicitFunctions)
-        impParaboloid
-        (
-            const dictionary& dict
-        );
+        planeImplicitFunction(const dictionary& dict);
+
 
     //- Destructor
-    virtual ~impParaboloid();
+    virtual ~planeImplicitFunction() = default;
 
-    virtual scalar value(const vector p) 
+
+    virtual scalar value(const vector& p) const
     {
-          return coeffs_.x()*sqr(p.x()) + coeffs_.y()*p.x()*p.y()  + coeffs_.z()*sqr(p.y()) - p.z();
+        return -normal_ & (origin_ - p);
     }
 
+    virtual vector grad(const vector& p) const
+    {
+        // normal_ has the length of one
+        return normal_;
+    }
 
-    // Member Functions
-
-
+    virtual scalar distanceToSurfaces(const vector& p) const
+    {
+        // normal_ has the length of one
+        return mag((p - origin_) & -normal_);
+    }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-} // End namespace implicitFunction
+
+} // End namespace implicitFunctions
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

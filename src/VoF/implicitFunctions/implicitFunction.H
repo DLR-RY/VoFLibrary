@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,26 +25,25 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::implicitFunctions
+    Foam::implicitFunction
 
 Description
-    base class for implicit functions
+    Base class for implicit functions
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    implicitFunctions.C
+    implicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef implicitFunctions_H
-#define implicitFunctions_H
+#ifndef implicitFunction_H
+#define implicitFunction_H
 
-
+#include "autoPtr.H"
+#include "dictionary.H"
+#include "vector.H"
 #include "runTimeSelectionTables.H"
-#include "objectRegistry.H"
-#include "fvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,83 +51,67 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class implicitFunctions Declaration
+                      Class implicitFunction Declaration
 \*---------------------------------------------------------------------------*/
 
-class implicitFunctions
+class implicitFunction
 {
-    // Private data
-
-
-
     // Private Member Functions
 
-        //- Disallow default bitwise copy construct
-        implicitFunctions(const implicitFunctions&);
+        //- No copy construct
+        implicitFunction(const implicitFunction&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const implicitFunctions&);
+        //- No copy assignment
+        void operator=(const implicitFunction&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("implicitFunctions");
+    TypeName("implicitFunction");
 
-    // Declare run-time constructor selection table
-
-        // For the dictionary constructor
-        declareRunTimeSelectionTable
+    //- Declare run-time constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        implicitFunction,
+        dict,
         (
-            autoPtr,
-            implicitFunctions,
-            dict,
-            (
-                const dictionary& dict
-            ),
-            (dict)
-        );
-
-
- 
-
-
-    // Constructors
-
-        implicitFunctions();
-
-     // Selectors
-
-        //- Return a reference to the selected implicitFunctions
-        static autoPtr<implicitFunctions> New
-        (
-            const word& implicitFunctionsType,
             const dictionary& dict
-        );
+        ),
+        (dict)
+    );
 
+    //- Constructor
+    implicitFunction();
+
+    //- Return a reference to the selected implicitFunction
+    static autoPtr<implicitFunction> New
+    (
+        const word& implicitFunctionType,
+        const dictionary& dict
+    );
 
     //- Destructor
-    virtual ~implicitFunctions();
+    virtual ~implicitFunction() = default;
 
 
     // Member Functions
 
-        //- Is object global
-        virtual scalar value(const vector p) 
+        virtual scalar value(const vector& p) const
         {
             return GREAT;
         }
 
-        virtual vector grad(const vector p) 
+        virtual vector grad(const vector& p) const
         {
-            return vector(GREAT,GREAT,GREAT);
+            return vector::max;
         }
 
-        virtual scalar distanceToSurfaces(const vector p) 
+        virtual scalar distanceToSurfaces(const vector& p) const
         {
             return GREAT;
         }
-
 };
 
 

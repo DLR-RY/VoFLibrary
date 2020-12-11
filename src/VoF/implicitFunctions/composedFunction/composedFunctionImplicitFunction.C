@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,53 +26,63 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "impComposedFunction.H"
+#include "composedFunctionImplicitFunction.H"
+#include "scalarField.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impComposedFunction, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impComposedFunction, dict);
+        defineTypeNameAndDebug(composedFunctionImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            composedFunctionImplicitFunction,
+            dict
+        );
     }
-
 }
-
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
- const Foam::Enum
- <
-    Foam::implicitFunction::impComposedFunction::setMode
- >
- Foam::implicitFunction::impComposedFunction::modeNames
- ({
-     { setMode::ADD, "add" },
-     { setMode::SUBTRACT, "subtract" },
-     { setMode::MINDIST, "minDist" },
-     { setMode::INTERSECT, "intersect" }, //,
- });
+const Foam::Enum
+<
+    Foam::implicitFunctions::composedFunctionImplicitFunction::modeType
+>
+Foam::implicitFunctions::composedFunctionImplicitFunction::modeTypeNames
+({
+    { modeType::ADD, "add" },
+    { modeType::SUBTRACT, "subtract" },
+    { modeType::MINDIST, "minDist" },
+    { modeType::INTERSECT, "intersect" },
+});
 
-Foam::label Foam::implicitFunction::impComposedFunction::selectFunction(const scalarField& values)
+Foam::label
+Foam::implicitFunctions::composedFunctionImplicitFunction::selectFunction
+(
+    const scalarField& values
+) const
 {
     switch (mode_)
     {
-        case setMode::MINDIST:
+        case modeType::MINDIST:
         {
-            scalarField absVal = mag(values);
+            scalarField absVal(mag(values));
             return findMin(absVal);
         }
-        case setMode::ADD:
+        case modeType::ADD:
         {
             return findMax(values);
         }
-        case setMode::SUBTRACT:
+        case modeType::SUBTRACT:
         {
-            label idx = findMin(values,1); // start at the second entry
-            if(values[idx] < values[0] && pos(values[0]))
+            // Note: start at the second entry
+            const label idx = findMin(values, 1);
+
+            if (values[idx] < values[0] && pos(values[0]))
             {
                 return idx;
             }
@@ -75,7 +91,7 @@ Foam::label Foam::implicitFunction::impComposedFunction::selectFunction(const sc
                 return 0;
             }
         }
-        case setMode::INTERSECT:
+        case modeType::INTERSECT:
         {
             return findMin(values);
         }
@@ -84,33 +100,31 @@ Foam::label Foam::implicitFunction::impComposedFunction::selectFunction(const sc
             FatalErrorInFunction
                 << "This mode is not supported  only " << nl
                 << "Supported modes are: " << nl
-                << "minDist" << nl
-                << "add" << nl
-                << "subtract" << nl
+                << modeTypeNames
                 << abort(FatalError);
-            return -1;
         }
     }
+
+    return -1;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-
-
-Foam::implicitFunction::impComposedFunction::impComposedFunction
+Foam::implicitFunctions::composedFunctionImplicitFunction::
+composedFunctionImplicitFunction
 (
     const dictionary& dict
 )
 :
-    functions_(dict.subDict("composedFunctions").size()),
-    //mode_(dict.subDict("impComposedFunctions").get<word>("mode")),
-    mode_(modeNames.get("mode",dict)),
-    values_(dict.subDict("composedFunctions").size())
+    functions_(dict.subDict("composedFunction").size()),
+    mode_(modeTypeNames.get("mode", dict)),
+    values_(dict.subDict("composedFunction").size())
 {
-    dictionary funcDict = dict.subDict("composedFunctions");
+    const dictionary& funcDict = dict.subDict("composedFunction");
     label funcI = 0;
 
-    forAllConstIter(dictionary,funcDict,iter)
+    forAllConstIters(funcDict, iter)
     {
         const word& key = iter().keyword();
 
@@ -127,63 +141,67 @@ Foam::implicitFunction::impComposedFunction::impComposedFunction
         functions_.set
         (
             funcI,
-            implicitFunctions::New
+            implicitFunction::New
             (
-                word(compFuncDict.lookup("function")),
+                word(compFuncDict.lookup("type")),
                 compFuncDict
             )
         );
 
-        funcI++;
-
+        ++funcI;
     }
-
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impComposedFunction::~impComposedFunction()
-{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-Foam::scalar Foam::implicitFunction::impComposedFunction::value(const vector p)
-{
 
+Foam::scalar Foam::implicitFunctions::composedFunctionImplicitFunction::value
+(
+    const vector& p
+) const
+{
     forAll(values_,i)
     {
-        // values_[i] = mag(functions_[i].value(p));
-        values_[i] = (functions_[i].value(p));
+        values_[i] = functions_[i].value(p);
     }
-    label idx = selectFunction(values_);
 
-    // return functions_[minIdx].value(p);
+    const label idx = selectFunction(values_);
+
     return values_[idx];
 }
 
-Foam::vector Foam::implicitFunction::impComposedFunction::grad(const vector p)
-{
 
+Foam::vector Foam::implicitFunctions::composedFunctionImplicitFunction::grad
+(
+    const vector& p
+) const
+{
     forAll(values_,i)
     {
         values_[i] = mag(functions_[i].value(p));
     }
-    label minIdx = findMin(values_);
+
+    const label minIdx = findMin(values_);
 
     return functions_[minIdx].grad(p);
 }
 
-Foam::scalar Foam::implicitFunction::impComposedFunction::distanceToSurfaces(const vector p)
-{
 
+Foam::scalar
+Foam::implicitFunctions::composedFunctionImplicitFunction::distanceToSurfaces
+(
+    const vector& p
+) const
+{
     forAll(values_,i)
     {
         values_[i] = mag(functions_[i].value(p));
     }
-    label minIdx = findMin(values_);
+
+    const label minIdx = findMin(values_);
 
     return functions_[minIdx].distanceToSurfaces(p);
 }
+
 
 // ************************************************************************* //

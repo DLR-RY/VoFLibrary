@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -24,8 +30,7 @@ Class
 Description
     base class for cell stencil in a narrow band
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     zoneCellStencils.C
@@ -55,18 +60,12 @@ namespace Foam
 
 class zoneCellStencils
 :
-    public MeshObject
-    <
-        fvMesh,
-        UpdateableMeshObject,
-        zoneCellStencils
-    >,
     public labelListList
 {
     protected:
     // Protected Members
 
-        const fvMesh& mesh_;
+        const fvMesh& meshRef_;
 
         //- Return patch of all coupled faces.
         autoPtr<indirectPrimitivePatch> nonEmptyFacesPatch() const;
@@ -116,14 +115,15 @@ class zoneCellStencils
             labelListList& globalCellCells
         ) = 0;
 
-
-
         labelHashSet needComm_;
 
         globalIndex globalNumbering_;
 
-
-
+        //- No copy construct
+        zoneCellStencils(const zoneCellStencils&) = delete;
+  
+        //- No copy assignment
+        void operator=(const zoneCellStencils&) = delete;
 
 public:
 
@@ -137,6 +137,8 @@ public:
         //- Calculates per cell the neighbour data
         //  (= cell or boundary in global numbering).
         //  First element is always cell itself!
+        //- Destructor
+        virtual ~zoneCellStencils() = default;
 
         void updateStencil
         (
@@ -153,7 +155,7 @@ public:
 
         const polyMesh& mesh() const
         {
-            return mesh_;
+            return meshRef_;
         }
  
          //- Global numbering for cells and boundary faces
@@ -161,18 +163,6 @@ public:
         {
              return globalNumbering_;
         }
-
-        virtual void updateMesh(const mapPolyMesh& mpm);
-
-        virtual bool movePoints()
-        {
-            // do nothing;
-            return false;
-        } 
-
-
-
-
 
 };
 

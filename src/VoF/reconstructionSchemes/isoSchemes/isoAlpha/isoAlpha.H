@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::isoAlpha
+    Foam::reconstruction::isoAlpha
 
 Description
     Reconstructs an interface (centre and normal vectors) consisting of isosurfaces
@@ -65,20 +71,17 @@ namespace reconstruction
 {
 
 /*---------------------------------------------------------------------------*\
-                Class isoAlpha Declaration
+                          Class isoAlpha Declaration
 \*---------------------------------------------------------------------------*/
 
 class isoAlpha
 :
     public reconstructionSchemes
 {
+    // Private data
 
-  private:
         //- Reference to mesh
         const fvMesh& mesh_;
-
-        //- Interpolation object from cell centres to points
-        volPointInterpolation vpi_;
 
         //- VOF field interpolated to mesh points
         scalarField ap_;
@@ -86,7 +89,7 @@ class isoAlpha
         // Switches and tolerances. Tolerances need to go into toleranceSwitches
 
         //- Tolerance for search of isoFace giving specified VOF value
-        scalar vof2IsoTol_;
+        scalar isoFaceTol_;
 
         //- Tolerance for marking of surface cells:
         //  Those with surfCellTol_ < alpha1 < 1 - surfCellTol_
@@ -98,43 +101,45 @@ class isoAlpha
 
         // Private Member Functions
 
-        //- Disallow copy construct
-        isoAlpha(const isoAlpha&);
+            //- No copy construct
+            isoAlpha(const isoAlpha&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const isoAlpha&);
+            //- No bitwise assignment
+            void operator=(const isoAlpha&) = delete;
 
-  public:
-        //- Runtime type information
-        TypeName("isoAlpha");
 
-        // Constructors
+public:
 
-        //- Construct from components
-        isoAlpha
-        (
-            volScalarField& alpha1,
-            const surfaceScalarField& phi,
-            const volVectorField& U,
-            dictionary& dict
-        );
+    //- Runtime type information
+    TypeName("isoAlpha");
 
-        //- Destructor
-        virtual ~isoAlpha();
+    //- Construct from components
+    isoAlpha
+    (
+        volScalarField& alpha1,
+        const surfaceScalarField& phi,
+        const volVectorField& U,
+        const dictionary& dict
+    );
 
-        //- reconstructs the interface
-        virtual void reconstruct();
+    //- Destructor
+    virtual ~isoAlpha() = default;
 
-        virtual void mapAlphaField()
+    // Member Functions
+
+        //- Reconstructs the interface
+        virtual void reconstruct(bool forceUpdate = true);
+
+        //- map VoF Field in case of refinement
+        virtual void mapAlphaField() const
         {
             // do nothing;
         }
-        
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End reconstructionSchemes Foam
+} // End namespace reconstruction
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

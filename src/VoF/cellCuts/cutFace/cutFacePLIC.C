@@ -1,10 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -18,29 +25,29 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 
 \*---------------------------------------------------------------------------*/
 
 #include "cutFacePLIC.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::cutFacePLIC::cutFacePLIC(const fvMesh& mesh)
-    : cutFace(mesh),
-      mesh_(mesh),
-      subFaceCentre_(vector::zero),
-      subFaceArea_(vector::zero),
-      subFacePoints_(10),
-      surfacePoints_(4),
-      pointStatus_(10),
-      weight_(10),
-      faceStatus_(-1)
+:
+    cutFace(mesh),
+    mesh_(mesh),
+    subFaceCentre_(vector::zero),
+    subFaceArea_(vector::zero),
+    subFacePoints_(10),
+    surfacePoints_(4),
+    pointStatus_(10),
+    weight_(10),
+    faceStatus_(-1)
 {
     clearStorage();
 }
+
 
 // * * * * * * * * * * * Public Member Functions  * * * * * * * * * * * * * //
 
@@ -62,7 +69,7 @@ Foam::label Foam::cutFacePLIC::calcSubFace
     {
         // pointStatus is the distance to the plane
         scalar value = (mesh_.points()[f[i]] - base) & normal;
-        if (mag(value) < SMALL)
+        if (mag(value) < 10 * SMALL)
         {
             value = 0;
         }
@@ -110,25 +117,29 @@ Foam::label Foam::cutFacePLIC::calcSubFace
 }
 
 
-Foam::point Foam::cutFacePLIC::subFaceCentre()
+const Foam::point& Foam::cutFacePLIC::subFaceCentre() const
 {
     return subFaceCentre_;
 }
 
-Foam::vector Foam::cutFacePLIC::subFaceArea()
+
+const Foam::vector& Foam::cutFacePLIC::subFaceArea() const
 {
     return subFaceArea_;
 }
 
-Foam::DynamicList<Foam::point>& Foam::cutFacePLIC::subFacePoints()
+
+const Foam::DynamicList<Foam::point>& Foam::cutFacePLIC::subFacePoints() const
 {
     return subFacePoints_;
 }
 
-Foam::DynamicList<Foam::point>& Foam::cutFacePLIC::surfacePoints()
+
+const Foam::DynamicList<Foam::point>& Foam::cutFacePLIC::surfacePoints() const
 {
     return surfacePoints_;
 }
+
 
 void Foam::cutFacePLIC::clearStorage()
 {
@@ -140,5 +151,6 @@ void Foam::cutFacePLIC::clearStorage()
     weight_.clear();
     faceStatus_ = -1;
 }
+
 
 // ************************************************************************* //

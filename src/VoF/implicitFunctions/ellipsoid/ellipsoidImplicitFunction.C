@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,60 +23,46 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 \*---------------------------------------------------------------------------*/
 
-#include "impParaboloid.H"
+#include "ellipsoidImplicitFunction.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impParaboloid, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impParaboloid, dict);
+        defineTypeNameAndDebug(ellipsoidImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            ellipsoidImplicitFunction,
+            dict
+        );
     }
-
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunction::impParaboloid::impParaboloid
+Foam::implicitFunctions::ellipsoidImplicitFunction::ellipsoidImplicitFunction
 (
-    const vector coeffs
+    const vector& semiAxis
 )
 :
-    coeffs_(coeffs)
-{
-
-}
+    semiAxis_(semiAxis)
+{}
 
 
-Foam::implicitFunction::impParaboloid::impParaboloid
+Foam::implicitFunctions::ellipsoidImplicitFunction::ellipsoidImplicitFunction
 (
     const dictionary& dict
 )
 :
-    coeffs_(dict.lookup("coeffs"))
-{
-
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impParaboloid::~impParaboloid()
+    semiAxis_(dict.get<vector>("semiAxis"))
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -55,16 +55,15 @@ class zoneDistributePoints
 :   public MeshObject
     <
         fvMesh,
-        UpdateableMeshObject,
+        TopologicalMeshObject,
         zoneDistributePoints
     >
-//:   public IOobject
 {
 
   private:
 
     // Private data
-    
+
     //- Combine operator for Lists
     template <class type> class appendOp
     {
@@ -88,32 +87,32 @@ class zoneDistributePoints
         //- Reference to mesh
         const fvMesh& mesh_;
 
-        // boundaryPoints without empty and wedge points
+        //- boundaryPoints without empty and wedge points
         labelList boundaryPoints_;
 
-        // is point and patch empty and wege are excluded
+        //- is point and patch empty and wege are excluded
         boolList isBoundaryPoint_;
 
-        // is it a vaild boundary face exclude proc wedge and empty
-        // size is nFaces - internalFaces
+        //- valid boundary face excludes processor wedge and empty
+        //  size is nFaces - internalFaces
         boolList validBoundaryFace_;
 
-        //- Return patch of non empty and wedge faces.
+        //- Return patch with non-empty and non-wedge faces.
         autoPtr<indirectPrimitivePatch> nonEmptyWedgePatch() const;
 
-        // return faceValue
+        //- return faceValue
         template <typename Type>
         Type faceValue
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            const label& faceI
+            const label faceI
         ) const;
 
 
 
   public:
     // Constructors
-        // Declare name of the class and its debug switch
+        //- Declare name of the class and its debug switch
         TypeName("zoneDistributePoints");
 
         //- Construct from fvMesh
@@ -134,14 +133,15 @@ class zoneDistributePoints
             const GeometricField<Type, fvPatchField, volMesh>& phi
         );
 
-        // update mesh in case of topochange
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        // //- update mesh in case of topochange
+        // virtual void updateMesh(const mapPolyMesh& mpm);
 
-        virtual bool movePoints()
-        {
-            // do nothing;
-            return false;
-        } 
+        // //- movePoints
+        // virtual bool movePoints()
+        // {
+        //     // do nothing;
+        //     return false;
+        // }
 
 
 

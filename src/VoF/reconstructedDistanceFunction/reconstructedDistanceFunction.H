@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Class
     Foam::reconstructedDistanceFunction
 
@@ -44,6 +44,7 @@ SourceFiles
 #include "Map.H"
 #include "zoneDistribute.H"
 #include "dimensionedScalar.H"
+#include "typeInfo.H"
 
 
 
@@ -75,8 +76,6 @@ private:
 
     boolList nextToInterface_;
 
-    //indexedOctree<treeDataPoint> surfaceTree_;
-
     //- Return patch of all coupled faces.
     autoPtr<indirectPrimitivePatch> coupledFacesPatch() const;
 
@@ -87,10 +86,15 @@ private:
 public:
 
     // Constructors
+    // Declare name of the class and its debug switch
+    ClassName("reconstructedDistanceFunction");
 
     //- Construct from fvMesh and a scalarField
     //  Length of scalarField should equal number of mesh points
     reconstructedDistanceFunction(const fvMesh& mesh);
+
+    // Selectors
+    static reconstructedDistanceFunction& New(const fvMesh&);
 
 
     // Member functions
@@ -135,12 +139,12 @@ public:
     const volScalarField& cellDistLevel()
     {
         return cellDistLevel_;
-    } 
+    }
 
     const boolList& nextToInterface()
     {
         return nextToInterface_;
-    } 
+    }
 
 };
 

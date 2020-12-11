@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2016-2017 DHI
+    Modified code Copyright (C) 2016-2019 OpenCFD Ltd.
+    Modified code Copyright (C) 2018 Johan Roenby
+    Modified code Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,7 +27,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    isoAdvector
+    Foam::isoAdvection
 
 Description
     Calculates the new VOF (alpha) field after time step dt given the initial
@@ -29,45 +37,36 @@ Description
     across the mesh faces with the velocity field interpolated to the
     isosurfaces.
 
-    Note: normal vector points in the fluid phase
-
     Reference:
-    \verbatim
-        Roenby, J., Bredmose, H. and Jasak, H. (2016).
-        A computational method for sharp interface advection
-        Royal Society Open Science, 3
-        doi 10.1098/rsos.160405
-
-        Henning Scheufler, Johan Roenby,
-        Accurate and efficient surface reconstruction from volume
-        fraction data on general meshes,
-        Journal of Computational Physics, 2019,
-        doi 10.1016/j.jcp.2019.01.009
-
-    \endverbatim
+        \verbatim
+            Roenby, J., Bredmose, H. and Jasak, H. (2016).
+            A computational method for sharp interface advection
+            Royal Society Open Science, 3
+            doi 10.1098/rsos.160405
+        \endverbatim
 
     Original code supplied by Johan Roenby, DHI (2016)
-
+    Modified Henning Scheufler, DLR
 
 SourceFiles
-    isoAdvector.C
+    isoAdvection.C
+    isoAdvectionTemplates.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef isoAdvector_H
-#define isoAdvector_H
+#ifndef isoAdvection_H
+#define isoAdvection_H
 
-#include "typeInfo.H"
 #include "advectionSchemes.H"
-#include "volFields.H"
-#include "dimensionedScalar.H"
-#include "autoPtr.H"
-
-#include "volPointInterpolation.H"
+#include "fvMesh.H"
+#include "volFieldsFwd.H"
+#include "surfaceFields.H"
+#include "fvc.H"
+#include "className.H"
 #include "reconstructionSchemes.H"
 #include "cutFaceAdvect.H"
-
-
+#include "bitSet.H"
+#include "zeroField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -76,15 +75,14 @@ namespace Foam
 namespace advection
 {
 
+
 /*---------------------------------------------------------------------------*\
-                Class isoAdvector Declaration
+                        Class isoAdvection Declaration
 \*---------------------------------------------------------------------------*/
 
-class isoAdvector
+class isoAdvection
     : public advectionSchemes
 {
-
-private:
     // Private data types
 
         typedef DynamicList<label> DynamicLabelList;
@@ -92,14 +90,23 @@ private:
         typedef DynamicList<vector> DynamicVectorList;
         typedef DynamicList<point> DynamicPointList;
 
+
+    // Private data
+
         //- Reference to mesh
         const fvMesh& mesh_;
 
-        //- Face volumetric transport
+        //- Often used reference to alpha1 internal field
+        scalarField& alpha1In_;
+
+        //- Face volumetric water transport
         surfaceScalarField dVf_;
 
-        //- An isoCutFace object to get access to its face cutting functionality
-        cutFaceAdvect advectFace_;
+        //- Time spent performing interface advection
+        scalar advectionTime_;
+
+        //- store timeIndex
+        label timeIndex_;
 
         // Switches and tolerances. Tolerances need to go into toleranceSwitches
 
@@ -107,18 +114,12 @@ private:
             label nAlphaBounds_;
 
             //- Tolerance for search of isoFace giving specified VOF value
-            scalar vof2IsoTol_;
+            scalar isoFaceTol_;
 
             //- Tolerance for marking of surface cells:
             //  Those with surfCellTol_ < alpha1 < 1 - surfCellTol_
             scalar surfCellTol_;
-            
-            //- Switch controlling whether to use isoface normals for interface
-            //  orientation (default corresponding to false) to base it on 
-            //  a smoothed gradient of alpha calculation (giving better results 
-            //  on tri on tet meshes).
-            bool gradAlphaBasedNormal_;
-            
+
             //- Print isofaces in a <case>/isoFaces/isoFaces_#N.vtk files.
             //  Intended for debugging
             bool writeIsoFacesToFile_;
@@ -128,11 +129,8 @@ private:
             //- List of surface cells
             DynamicLabelList surfCells_;
 
-            //- Bool list for cells that have been touched by the bounding step
-            boolList cellIsBounded_;
-
-            //- True for all surface cells and their neighbours
-            boolList checkBounding_;
+            //- An isoCutFace object to get access to its face cutting functionality
+            cutFaceAdvect advectFace_;
 
             //- Storage for boundary faces downwind to a surface cell
             DynamicLabelList bsFaces_;
@@ -146,13 +144,6 @@ private:
             //- Storage for boundary surface iso face speed
             DynamicScalarList bsUn0_;
 
-            //- Storage for boundary surface iso value
-      //      DynamicScalarList bsf0_;
-
-            //- Smallest face area
-            scalar minMagSf_;
-
-            scalar limiter_;
 
 
         // Additional data for parallel runs
@@ -165,53 +156,48 @@ private:
             //  For non-processor patches the list will be empty.
             List<DynamicLabelList> surfaceCellFacesOnProcPatches_;
 
+
+    // Private Member Functions
+
+        //- No copy construct
+        isoAdvection(const isoAdvection&) = delete;
+
+        //- No copy assignment
+        void operator=(const isoAdvection&) = delete;
+
+
+        // Advection functions
+
+            void setProcessorPatches();
+
             //- For each face calculate volumetric face transport during dt
             void timeIntegratedFlux();
-
-            //- Calculate volumetric face transport during dt given the isoFace
-            //  data provided as input for face facei
 
             //- For a given cell return labels of faces fluxing out of this cell
             //  (based on sign of phi)
             void setDownwindFaces
             (
-                const label ci,
+                const label celli,
                 DynamicLabelList& downwindFaces
             ) const;
 
-            // Limit fluxes
-            void limitFluxes();
-
-            void limitFluxes(const volScalarField::Internal& Sp,const volScalarField::Internal& Su);
-
-            // Bound fluxes
-            void boundFromAbove
+            // LimitFluxes
+            template < class SpType, class SuType >
+            void limitFluxes
             (
-                const scalarField& alpha1,
-                surfaceScalarField& dVfcorrected,
-                DynamicLabelList& correctedFaces
+                const SpType& Sp,
+                const SuType& Su
             );
 
             // Bound fluxes
-            void boundFromAbove
+            template < class SpType, class SuType >
+            void boundFlux
             (
                 const scalarField& alpha1,
-                surfaceScalarField& dVfcorrected,
+                surfaceScalarField& dVfcorrectionValues,
                 DynamicLabelList& correctedFaces,
-                const volScalarField::Internal& Sp,
-                const volScalarField::Internal& Su
-            );
-
-            // Bound fluxes
-	    // is need as the source terms need to be modified if the inverse equation is solved: alpha2=(1-alpha)
-	    // to avoid this alpha1 will be bounded to >= 0 not  alpha2 <= 1
-            void boundFromBelow
-            (
-                const scalarField& alpha1,
-                surfaceScalarField& dVfcorrected,
-                DynamicLabelList& correctedFaces,
-                const volScalarField::Internal& Sp,
-                const volScalarField::Internal& Su
+                const SpType& Sp,
+                const SuType& Su
             );
 
             //- Given the face volume transport dVf calculates the total volume
@@ -228,8 +214,8 @@ private:
             {
                 return
                 (
-                    surfCellTol_ < alpha1_[celli]
-                 && alpha1_[celli] < 1 - surfCellTol_
+                    surfCellTol_ < alpha1In_[celli]
+                 && alpha1In_[celli] < 1 - surfCellTol_
                 );
             }
 
@@ -241,16 +227,8 @@ private:
                 bsx0_.clear();
                 bsn0_.clear();
                 bsUn0_.clear();
-                if(mesh_.topoChanging())
-                {
-                    // Introduced resizing to cope with changing meshes
-                    checkBounding_.resize(mesh_.nCells());
-                    cellIsBounded_.resize(mesh_.nCells());
-                }
-                checkBounding_ = false;
-                cellIsBounded_ = false;
-            }
 
+            }
 
         // Face value functions needed for random face access where the face
         // can be either internal or boundary face
@@ -276,69 +254,79 @@ private:
         // Parallel run handling functions
 
             //- Synchronize dVf across processor boundaries using upwind value
-            void syncProcPatches
+            DynamicList<label> syncProcPatches
             (
                 surfaceScalarField& dVf,
-                const surfaceScalarField& phi
+                const surfaceScalarField& phi,
+                bool returnSyncedFaces=false
             );
 
             //- Check if the face is on processor patch and append it to the
             //  list of surface cell faces on processor patches
             void checkIfOnProcPatch(const label facei);
 
-        void calcFaceFlux();
-
-        //- Apply the bounding based on user inputs
-        void applyBruteForceBounding();
-
-
-private:
-
-    // Private Member Functions
-
-        //- Disallow copy construct
-        isoAdvector(const isoAdvector&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const isoAdvector&);
-
-
+            //- Apply the bounding based on user inputs
+            void applyBruteForceBounding();
 
 public:
 
     //- Runtime type information
-    TypeName("isoAdvector");
+    TypeName("isoAdvection");
 
+    //- Constructors
 
-    // Constructors
-
-        //- Construct from components
-        isoAdvector
+        //- Construct given alpha, phi and velocity field. Note: phi should be
+        // divergence free up to a sufficient tolerance
+        isoAdvection
         (
-            volScalarField &alpha1,
+            volScalarField& alpha1,
             const surfaceScalarField& phi,
             const volVectorField& U
         );
 
 
     //- Destructor
-    virtual ~isoAdvector();
+    virtual ~isoAdvection() = default;
 
 
-    //- advection of the interface
-    virtual void advect();
+    // Member functions
 
-    //- advection of the interface with source terms
-    virtual void advect(const volScalarField::Internal& Sp,const volScalarField::Internal& Su);
+        //- Advect the free surface. Updates alpha field, taking into account
+        //  multiple calls within a single time step.
+        template < class SpType, class SuType >
+        void advect(const SpType& Sp, const SuType& Su);
+
+        //- advection of the interface
+        virtual void advect()
+        {
+            zeroField Sp;
+            zeroField Su;
+            advect<zeroField,zeroField>(Sp,Su);
+        }
+
+        //- advection of the interface with source terms
+        virtual void advect
+        (
+            const volScalarField::Internal& Sp,
+            const volScalarField::Internal& Su
+        )
+        {
+            advect<volScalarField::Internal,volScalarField::Internal>(Sp,Su);
+        }
 
 
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End advection Foam
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+#   include "isoAdvectionTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

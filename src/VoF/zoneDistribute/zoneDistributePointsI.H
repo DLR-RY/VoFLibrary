@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ template <typename Type>
 Type Foam::zoneDistributePoints::faceValue
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    const label& faceI
+    const label faceI
 ) const
 {
     const polyBoundaryMesh& pbm = mesh_.boundaryMesh();
@@ -50,7 +50,7 @@ Type Foam::zoneDistributePoints::faceValue
     return phi.boundaryField()[patchI][patchFaceI];
 }
 
-template <typename Type> 
+template <typename Type>
 Foam::Map<Foam::Field <Type> >
 Foam::zoneDistributePoints::getPointDatafromOtherProc
 (
@@ -58,16 +58,11 @@ Foam::zoneDistributePoints::getPointDatafromOtherProc
     const GeometricField<Type, fvPatchField, volMesh>& phi
 )
 {
-
     const labelListList& cPoints = mesh_.pointCells();
     const labelListList& fPoints = mesh_.pointFaces();
 
-    // cannot be on empty or
-    // wedge since they are
-    // ignored in
-    // syncGlobalIdxMap
-    DynamicList<Type> valList(16); // 16 pointsNeibours
-
+    // cannot be on empty or wedge since they are ignored in syncGlobalIdxMap
+    DynamicList<Type> valList(16);
     Map<Field <Type> > values;
 
     // Insert all cells adjacent to the point in stencil
@@ -89,7 +84,7 @@ Foam::zoneDistributePoints::getPointDatafromOtherProc
                 if(validBoundaryFace_[faceI - mesh_.nInternalFaces()])
                 {
                     valList.append(faceValue(phi,faceI));
-                } 
+                }
             }
         }
         const Field<Type> fieldVal(valList);
@@ -100,7 +95,6 @@ Foam::zoneDistributePoints::getPointDatafromOtherProc
     // syncNeiCellMap processor values are appended to the list
     syncTools::syncPointMap(mesh_, values, appendOp<Type>());
     return values;
-
 }
 
 

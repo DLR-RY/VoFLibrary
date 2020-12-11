@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -78,9 +84,9 @@ Type Foam::zoneDistribute::getValue
     const label& gblIdx
 ) const
 {
-    if(globalNumbering().isLocal(gblIdx))
+    if(gblIdx_.isLocal(gblIdx))
     {
-        const label idx = globalNumbering().toLocal(gblIdx);
+        const label idx = gblIdx_.toLocal(gblIdx);
         return getLocalValue(phi,idx);
     }
     else // from other proc
@@ -98,6 +104,7 @@ Foam::Map<Foam::Field <Type> > Foam::zoneDistribute::getFields
     const GeometricField<Type, fvPatchField, volMesh>& phi
 )
 {
+    zoneCPCStencil& stencil = zoneCPCStencil::New(mesh_);
     if(zone.size() != phi.size())
     {
         FatalErrorInFunction
@@ -115,66 +122,6 @@ Foam::Map<Foam::Field <Type> > Foam::zoneDistribute::getFields
         phi
     );
 
-//     List < Map < Type > > sendValues(Pstream::nProcs());
-
-//     if (Pstream::parRun())
-//     {
-//         forAll(send_,domaini)
-//         {
-//             const labelHashSet& toNei = send_[domaini];
-
-//             forAllConstIters(toNei,iter)
-//             {
-//                 sendValues[domaini].insert
-//                 (
-//                     iter.key(),
-//                     getLocalValue(phi,globalNumbering().toLocal(iter.key()))
-//                 );
-
-//             }
-//         }
-
-//         PstreamBuffers pBufs(Pstream::commsTypes::nonBlocking);
-
-//         // Stream data into buffer
-//         for (label domain = 0; domain < Pstream::nProcs(); domain++)
-//         {
-
-//             if (domain != Pstream::myProcNo()) // && send[domain].size())
-//             {
-//                 // Put data into send buffer
-//                 UOPstream toDomain(domain, pBufs);
-
-//                 toDomain << sendValues[domain];
-//             }
-//         }
-
-//         // wait until everything is written.
-//         pBufs.finishedSends();
-
-//         Map<Type> tmpValue;
-
-//         for (label domain = 0; domain < Pstream::nProcs(); domain++)
-//         {
-// //            neiMap.clearStorage();
-//             tmpValue.clear();
-
-
-//             if (domain != Pstream::myProcNo())
-//             {
-//                 // get data from send buffer
-//                 UIPstream fromDomain(domain, pBufs);
-
-//                 fromDomain >> tmpValue;
-
-//                 forAllConstIters(tmpValue, iter)
-//                 {
-//                     neiValues.insert(iter.key(), iter());
-//                 }
-//             }
-//         }
-//     }
-
     Map< Field <Type> > stencilWithValues;
 
     DynamicField< Type > tmpField(100);
@@ -183,11 +130,11 @@ Foam::Map<Foam::Field <Type> > Foam::zoneDistribute::getFields
     {
         if(zone[celli])
         {
-            tmpField.clearStorage(); // does clear resize?clear
+            tmpField.clearStorage();
 
-            forAll(stencil_[celli],i)
+            forAll(stencil[celli],i)
             {
-                const label& gblIdx = stencil_[celli][i];
+                const label& gblIdx = stencil[celli][i];
                 tmpField.append(getValue(phi,neiValues,gblIdx));
             }
             stencilWithValues.insert(celli,tmpField);
@@ -231,7 +178,7 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
                 sendValues[domaini].insert
                 (
                     iter.key(),
-                    getLocalValue(phi,globalNumbering().toLocal(iter.key()))
+                    getLocalValue(phi,gblIdx_.toLocal(iter.key()))
                 );
 
             }
@@ -243,7 +190,7 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
 
-            if (domain != Pstream::myProcNo()) // && send[domain].size())
+            if (domain != Pstream::myProcNo())
             {
                 // Put data into send buffer
                 UOPstream toDomain(domain, pBufs);
@@ -259,9 +206,7 @@ Foam::Map <Type>  Foam::zoneDistribute::getDatafromOtherProc
 
         for (label domain = 0; domain < Pstream::nProcs(); domain++)
         {
-//            neiMap.clearStorage();
             tmpValue.clear();
-
 
             if (domain != Pstream::myProcNo())
             {

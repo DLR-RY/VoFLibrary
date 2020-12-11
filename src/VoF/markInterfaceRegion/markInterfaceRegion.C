@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -81,12 +81,12 @@ void Foam::markInterfaceRegion::markCellsNearSurf
     volScalarField& cellDistLevel
 )
 {
-    // performance might be improved by increasing the saving last iteations cells
-    // in a Map and loop over the map 
+    // performance might be improved by increasing the saving last iteations
+    // cells in a Map and loop over the map
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(nextToInterface.size() != mesh_.nCells())
+        if (nextToInterface.size() != mesh_.nCells())
         {
             nextToInterface.resize(mesh_.nCells());
         }
@@ -102,10 +102,10 @@ void Foam::markInterfaceRegion::markCellsNearSurf
     // do coupled face first
     Map<bool> syncMap;
 
-    for(int level = 0;level<=neiRingLevel;level++) 
+    for(int level = 0;level<=neiRingLevel;level++)
     {
         // parallel
-        if(level > 0)
+        if (level > 0)
         {
             forAll(coupledBoundaryPoints_,i)
             {
@@ -120,29 +120,29 @@ void Foam::markInterfaceRegion::markCellsNearSurf
                     }
                 }
             }
-        
+
             syncTools::syncPointMap(mesh_, syncMap, orEqOp<bool>());
 
             // mark parallel points first
             forAllConstIter(Map<bool>, syncMap, iter)
             {
                 const label pi = iter.key();
-                
-                if(!alreadyMarkedPoint[pi])
+
+                if (!alreadyMarkedPoint[pi])
                 {
                     // loop over all cells attached to the point
-                    forAll(cPoints[pi],j) 
+                    forAll(cPoints[pi],j)
                     {
                         const label& pCelli = cPoints[pi][j];
-                        if(cellDistLevel[pCelli] == -1)
+                        if (cellDistLevel[pCelli] == -1)
                         {
                             cellDistLevel[pCelli] = level;
                             nextToInterface[pCelli] = true;
                         }
-                        
+
                     }
                 }
-                
+
                 alreadyMarkedPoint[pi] = true;
             }
         }
@@ -150,9 +150,9 @@ void Foam::markInterfaceRegion::markCellsNearSurf
 
         forAll(cellDistLevel, celli)
         {
-            if(level == 0)
+            if (level == 0)
             {
-                if(interfaceCells[celli])
+                if (interfaceCells[celli])
                 {
                     cellDistLevel[celli] = 0;
                     nextToInterface[celli] = true;
@@ -170,21 +170,22 @@ void Foam::markInterfaceRegion::markCellsNearSurf
                     {
                         const label& pI = pCells[celli][i];
                         // interfacePoint_[pI] = true;
-                        if(!alreadyMarkedPoint[pI])
+                        if (!alreadyMarkedPoint[pI])
                         {
-                            forAll(cPoints[pI],j) // loop over all cells attached to the point
+                            // loop over all cells attached to the point
+                            forAll(cPoints[pI],j)
                             {
                                 const label& pCelli = cPoints[pI][j];
-                                if(cellDistLevel[pCelli] == -1)
+                                if (cellDistLevel[pCelli] == -1)
                                 {
                                     cellDistLevel[pCelli] = level;
                                     nextToInterface[pCelli] = true;
                                 }
-                                
+
                             }
                         }
                         alreadyMarkedPoint[pI] = true;
- 
+
                     }
                 }
             }
@@ -202,12 +203,12 @@ void Foam::markInterfaceRegion::markCellsNearSurf
     boolList& nextToInterface
 )
 {
-    // performance might be improved by increasing the saving last iteations cells
-    // in a Map and loop over the map 
+    // performance might be improved by increasing the saving last iteations
+    // cells in a Map and loop over the map
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(nextToInterface.size() != mesh_.nCells())
+        if (nextToInterface.size() != mesh_.nCells())
         {
             nextToInterface.resize(mesh_.nCells());
         }
@@ -224,10 +225,10 @@ void Foam::markInterfaceRegion::markCellsNearSurf
     // do coupled face first
     Map<bool> syncMap;
 
-    for(int level = 0;level<=neiRingLevel;level++) 
+    for(int level = 0;level<=neiRingLevel;level++)
     {
         // parallel
-        if(level > 0)
+        if (level > 0)
         {
             forAll(coupledBoundaryPoints_,i)
             {
@@ -242,29 +243,29 @@ void Foam::markInterfaceRegion::markCellsNearSurf
                     }
                 }
             }
-        
+
             syncTools::syncPointMap(mesh_, syncMap, orEqOp<bool>());
 
             // mark parallel points first
             forAllConstIter(Map<bool>, syncMap, iter)
             {
                 const label pi = iter.key();
-                
-                if(!alreadyMarkedPoint[pi])
+
+                if (!alreadyMarkedPoint[pi])
                 {
                     // loop over all cells attached to the point
-                    forAll(cPoints[pi],j) 
+                    forAll(cPoints[pi],j)
                     {
                         const label& pCelli = cPoints[pi][j];
-                        if(cellDistLevel[pCelli] == -1)
+                        if (cellDistLevel[pCelli] == -1)
                         {
                             cellDistLevel[pCelli] = level;
                             nextToInterface[pCelli] = true;
                         }
-                        
+
                     }
                 }
-                
+
                 alreadyMarkedPoint[pi] = true;
             }
         }
@@ -272,9 +273,9 @@ void Foam::markInterfaceRegion::markCellsNearSurf
 
         forAll(cellDistLevel, celli)
         {
-            if(level == 0)
+            if (level == 0)
             {
-                if(interfaceCells[celli])
+                if (interfaceCells[celli])
                 {
                     cellDistLevel[celli] = 0;
                     nextToInterface[celli] = true;
@@ -292,21 +293,22 @@ void Foam::markInterfaceRegion::markCellsNearSurf
                     {
                         const label& pI = pCells[celli][i];
                         // interfacePoint_[pI] = true;
-                        if(!alreadyMarkedPoint[pI])
+                        if (!alreadyMarkedPoint[pI])
                         {
-                            forAll(cPoints[pI],j) // loop over all cells attached to the point
+                             // loop over all cells attached to the point
+                            forAll(cPoints[pI],j)
                             {
                                 const label& pCelli = cPoints[pI][j];
-                                if(cellDistLevel[pCelli] == -1)
+                                if (cellDistLevel[pCelli] == -1)
                                 {
                                     cellDistLevel[pCelli] = level;
                                     nextToInterface[pCelli] = true;
                                 }
-                                
+
                             }
                         }
                         alreadyMarkedPoint[pI] = true;
- 
+
                     }
                 }
             }

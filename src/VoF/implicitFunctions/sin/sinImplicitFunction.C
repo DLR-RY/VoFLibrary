@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,36 +26,35 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "impSin.H"
+#include "sinImplicitFunction.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impSin, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impSin, dict);
+        defineTypeNameAndDebug(sinImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            sinImplicitFunction,
+            dict
+        );
     }
-
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunction::impSin::impSin
+Foam::implicitFunctions::sinImplicitFunction::sinImplicitFunction
 (
     const scalar period,
     const scalar phase,
     const scalar amplitude,
-    const vector direction,
-    const vector up,
-    const vector centre
+    const vector& direction,
+    const vector& up,
+    const vector& origin
 )
 :
     period_(period),
@@ -57,36 +62,25 @@ Foam::implicitFunction::impSin::impSin
     amplitude_(amplitude),
     up_(up),
     direction_(direction),
-    centre_(centre)
-{
-
-}
+    origin_(origin)
+{}
 
 
-Foam::implicitFunction::impSin::impSin
+Foam::implicitFunctions::sinImplicitFunction::sinImplicitFunction
 (
     const dictionary& dict
 )
 :
-    period_(readScalar(dict.lookup("period"))),
-    phase_(readScalar(dict.lookup("phase"))),
-    amplitude_(readScalar(dict.lookup("amplitude"))),
-    up_(dict.lookup("up")),
-    direction_(dict.lookup("direction")),
-    centre_(dict.lookup("centre"))
+    period_(dict.get<scalar>("period")),
+    phase_(dict.lookupOrDefault<scalar>("phase",0.0)),
+    amplitude_(dict.get<scalar>("amplitude")),
+    up_(dict.get<vector>("up")),
+    direction_(dict.get<vector>("direction")),
+    origin_(dict.get<vector>("origin"))
 {
-    direction_ /= mag(direction_);
-    up_ /= mag(up_);
+    direction_.normalise();
+    up_.normalise();
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impSin::~impSin()
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

@@ -47,7 +47,7 @@ solvers
         tolerance       1e-06;
         relTol          0;
     }
-	
+
     alpha1
     {
         solver          PBiCG;
@@ -55,8 +55,8 @@ solvers
         tolerance       1e-06;
         relTol          0;
 
-	//reconstructionSchemes gradAlpha;
-	reconstructionSchemes RECONSCHEME;
+	//reconstructionScheme gradAlpha;
+	reconstructionScheme RECONSCHEME;
 	//gradAlphaCoeffs
     interpolateNormal false;
     iterations 10;
@@ -77,8 +77,8 @@ isoAdvector
     snapAlpha	false;
 }
 
-//reconstructionSchemes gradAlpha;
-reconstructionSchemes RECONSCHEME;
+//reconstructionScheme gradAlpha;
+reconstructionScheme RECONSCHEME;
 //gradAlphaCoeffs
 
 	vof2IsoTol 1e-8;

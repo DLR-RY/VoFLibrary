@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,8 +29,7 @@ Class
 
 Description
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     reconstructionSchemes.C
@@ -54,76 +59,66 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class reconstructionSchemes
-    :
-    public IOdictionary // will write the pointer in registry
-    // inheritance from MeshObject(updateable) caused crashes with the polyhedralMesh
-    // probably caused by a portation bug
+:
+    public IOdictionary
 {
 
 private:
 
-	//-
+    // Private data
+
+        //- Coefficients dictionary
         dictionary reconstructionSchemesCoeffs_;
+
 
 protected:
 
+    // Protected data
+
+        //- Reference to the VoF Field
         volScalarField& alpha1_;
 
+        //- Reference to the face fluxes
         const surfaceScalarField& phi_;
 
+        //- Reference to the velocity field
         const volVectorField& U_;
 
+        //- Interface area normals
         volVectorField normal_;
 
+        //- interface centres
         volVectorField centre_;
 
+        //- Is interface cell?
         boolList interfaceCell_;
 
+        //- List of cell labels that have an interface
         DynamicField<label> interfaceLabels_;
 
-        bool writeVTK_;
-
+        // stores the timeindex and iteration to avoid multiple reconstruction
         Pair<label> timeIndexAndIter_;
 
-        //- Write face points to .vtk files e.g. for visualisation in Paraview
-        void isoFacesToFile
-        (
-            const DynamicList< List<point> >& isoFacePts,
-            const word fileName,
-            const word fileDir
-        ) const;
-
-        //- Write face points to .vtk files e.g. for visualisation in Paraview
-        void isoFacesToFile
-        (
-                const List<word>& fieldName,
-                const List<DynamicList<double> > &values,
-                const DynamicList< List<point> >& faces,
-                const word filNam,
-                const word filDir
-        ) const;
-
-        bool alreadyReconstructed();
-
-
+        //- is the interface already up-to-date?
+        bool alreadyReconstructed(bool forceUpdate = true);
 
 
     // Private Member Functions
 
-        //- Disallow copy construct
-        reconstructionSchemes(const reconstructionSchemes&);
+        //- No copy construct
+        reconstructionSchemes(const reconstructionSchemes&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const reconstructionSchemes&);
+        //- No bitwise assignment
+        void operator=(const reconstructionSchemes&) = delete;
 
 
 public:
 
-	//-
-	dictionary& modelDict();
-	
-	//-
-	const dictionary& modelDict() const;
+    //- Return access to the model dictionary
+    dictionary& modelDict();
+
+    //- Return const access to the model dictionary
+    const dictionary& modelDict() const;
 
 
 public:
@@ -143,9 +138,9 @@ public:
                 volScalarField& alpha1,
                 const surfaceScalarField& phi,
                 const volVectorField& U,
-                dictionary& dict
+                const dictionary& dict
             ),
-            (alpha1, phi,U,dict)
+            (alpha1, phi, U, dict)
         );
 
 
@@ -154,10 +149,10 @@ public:
         //- Return a reference to the selected phaseChange model
         static autoPtr<reconstructionSchemes> New
         (
-                volScalarField& alpha1,
-                const surfaceScalarField& phi,
-                const volVectorField& U,
-                dictionary& dict
+            volScalarField& alpha1,
+            const surfaceScalarField& phi,
+            const volVectorField& U,
+            const dictionary& dict
         );
 
 
@@ -170,45 +165,60 @@ public:
             volScalarField& alpha1,
             const surfaceScalarField& phi,
             const volVectorField& U,
-            dictionary& dict
+            const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~reconstructionSchemes();
+    virtual ~reconstructionSchemes() = default;
 
 
     // Member Functions
 
+        //- reconstruct the interface
+        virtual void reconstruct(bool forceUpdate = true) = 0;
 
-        virtual void reconstruct() = 0;
-
-        const volVectorField& normal()
+        //- Reference to interface normals
+        const volVectorField& normal() const
         {
             return normal_;
         }
 
-        const volVectorField& centre()
+        //- Reference to interface centres
+        const volVectorField& centre() const
         {
             return centre_;
         }
 
-        const boolList& interfaceCell()
+        //- Reference to interface normals
+        volVectorField& normal()
+        {
+            return normal_;
+        }
+
+        //- Reference to interface centres
+        volVectorField& centre()
+        {
+            return centre_;
+        }
+
+        //- Does the cell contain interface
+        const boolList& interfaceCell() const
         {
             return interfaceCell_;
         }
 
-        const DynamicField<label>& interfaceLabels()
+        //- List of cells with an interface
+        const DynamicField<label>& interfaceLabels() const
         {
             return interfaceLabels_;
         }
 
-        virtual void mapAlphaField()
+        //- Map VoF Field in case of refinement
+        virtual void mapAlphaField() const
         {
             // do nothing;
         }
-
-
 };
 
 

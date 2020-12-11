@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019-2019 DLR
+                            | Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 
 License
@@ -23,73 +23,103 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Class
-    Foam::polyDegree1
+    Foam::implicitFunctions::paraboloidImplicitFunction
 
 Description
-    first degree polynominal function
-
-    c0 + c1*x + c2*y + c3*z 
+    creates a paraboloid
 
     Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    polyDegree1.C
+    paraboloidImplicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef polyDegree1_H
-#define polyDegree1_H
+#ifndef implicitFunction_paraboloidImplicitFunction_H
+#define implicitFunction_paraboloidImplicitFunction_H
+
+#include "implicitFunction.H"
+#include "mathematicalConstants.H"
 
 
-#include "FixedList.H"
-#include "vector.H"
-#include "vector2D.H"
-#include "scalarField.H"
-
-#include "multiDimPolyFunctions.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                        Class polyDegree1 Declaration
-\*---------------------------------------------------------------------------*/
-
-class polyDegree1
-:
-    public multiDimPolyFunctions
+namespace implicitFunctions
 {
 
+/*---------------------------------------------------------------------------*\
+                 class paraboloidImplicitFunction Declaration
+\*---------------------------------------------------------------------------*/
 
-
+class paraboloidImplicitFunction
+:
+    public implicitFunction
+{
 private:
-    // Private data
+
+    // Private Member Data
+
+        //- Coefficients of ax^2 + bx*y + cy^2
+        vector coeffs_;
+
+
+    // Private Member Functions
+
+        //- No copy construct
+        paraboloidImplicitFunction(const paraboloidImplicitFunction&);
+
+        //- No bitwise assignment
+        void operator=(const paraboloidImplicitFunction&);
 
 
 public:
 
-
     //- Runtime type information
-    TypeName("polyDegree1");
+    TypeName("paraboloid");
+
+
     // Constructors
 
-    //- Construct from nTerms
-    polyDegree1(const Vector<label> dirs);
+        //- Construct from components
+        paraboloidImplicitFunction(const vector& coeffs);
 
-    //virtual ~polyDegree1();
+        //- Construct from dictionary
+        paraboloidImplicitFunction(const dictionary& dict);
 
-    virtual scalar value(const vector& vec);
 
-    virtual const scalarField& termValues(const vector& vec);
+    //- Destructor
+    virtual ~paraboloidImplicitFunction() = default;
 
+    virtual scalar value(const vector& p) const
+    {
+        return
+            coeffs_.x()*sqr(p.x())
+          + coeffs_.y()*p.x()*p.y()
+          + coeffs_.z()*sqr(p.y())
+          - p.z();
+    }
+
+    virtual vector grad(const vector& p) const
+    {
+        NotImplemented;
+        return vector::zero;
+    }
+
+    virtual scalar distanceToSurfaces(const vector& p) const
+    {
+        NotImplemented;
+        return 0;
+    }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace implicitFunctions
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

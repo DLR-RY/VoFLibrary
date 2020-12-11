@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,59 +23,52 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 \*---------------------------------------------------------------------------*/
 
-#include "impEllipsoid.H"
+#include "planeImplicitFunction.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impEllipsoid, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impEllipsoid, dict);
+        defineTypeNameAndDebug(planeImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            planeImplicitFunction,
+            dict
+        );
     }
-
 }
-
-
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunction::impEllipsoid::impEllipsoid
+Foam::implicitFunctions::planeImplicitFunction::planeImplicitFunction
 (
-    const vector semiAxis
+    const vector& origin,
+    const vector& normal
 )
 :
-    semiAxis_(semiAxis)
-{
+    origin_(origin),
+    normal_(normal)
+{}
 
-}
 
-
-Foam::implicitFunction::impEllipsoid::impEllipsoid
+Foam::implicitFunctions::planeImplicitFunction::planeImplicitFunction
 (
     const dictionary& dict
 )
 :
-    semiAxis_(dict.lookup("semiAxis"))
+    origin_(dict.get<vector>("origin")),
+    normal_(dict.get<vector>("normal"))
 {
-
+    normal_.normalise();
 }
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impEllipsoid::~impEllipsoid()
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

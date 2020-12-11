@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ void Foam::reconstruction::isoRDF::calcResidual
     {
         if (mag(normal[celli]) != 0) //
         {
-            const vector cellNormal = normal[celli]/mag(normal[celli]); // cache it
+            const vector cellNormal = normal[celli]/mag(normal[celli]);
             vector oldCellNormal = oldNormal[celli];
             if(oldCellNormal == vector::zero)
             {
@@ -63,13 +63,14 @@ void Foam::reconstruction::isoRDF::calcResidual
             else
             {
                 oldCellNormal /= mag(oldCellNormal);
-                scalar normalRes = (1 - (cellNormal & oldCellNormal)); 
+                scalar normalRes = (1 - (cellNormal & oldCellNormal));
 
                 normalResidual.insert(celli,normalRes);
             }
         }
     }
 }
+
 
 void Foam::reconstruction::isoRDF::setInitPoints()
 {
@@ -88,6 +89,7 @@ void Foam::reconstruction::isoRDF::setInitPoints()
     const boolList& nextToInterface_ = RDF_.nextToInterface();
     exchangeFields_.updateStencil(nextToInterface_);
 }
+
 
 void Foam::reconstruction::isoRDF::interpolatePoints(const volScalarField& phi)
 {
@@ -110,14 +112,14 @@ void Foam::reconstruction::isoRDF::interpolatePoints(const volScalarField& phi)
         //if(interfaceCell_[celli])
         //{
         const label celli = interfaceLabels_[i];
-        
+
 
         forAll(pCells[celli],j)
         {
 
             const label pI = pCells[celli][j];
             // point already calculated skip point
-            if(pVisisted.found(pI)) 
+            if(pVisisted.found(pI))
             {
                 continue;
             }
@@ -142,7 +144,7 @@ void Foam::reconstruction::isoRDF::interpolatePoints(const volScalarField& phi)
                 cellCentre -= mesh_.points()[pI];
                 ap_[pI] = lsInterpol.interpolate(cellCentre,phiValues);
             }
-        }     
+        }
     }
 }
 
@@ -153,7 +155,7 @@ Foam::reconstruction::isoRDF::isoRDF
     volScalarField& alpha1,
     const surfaceScalarField& phi,
     const volVectorField& U,
-    dictionary& dict
+    const dictionary& dict
 )
 :
     reconstructionSchemes
@@ -177,7 +179,6 @@ Foam::reconstruction::isoRDF::isoRDF
 
 
 {
-    writeVTK_ =  readBool( modelDict().lookup("writeVTK" ));
     Info << "iteration_ " << iteration_ << endl;
 }
 
@@ -192,11 +193,11 @@ Foam::reconstruction::isoRDF::~isoRDF()
 
 
 // ************************************************************************* //
-void Foam::reconstruction::isoRDF::reconstruct()
+void Foam::reconstruction::isoRDF::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if(uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }
@@ -214,11 +215,9 @@ void Foam::reconstruction::isoRDF::reconstruct()
 
     for(int iter=0;iter<iteration_;iter++)
     {
-
         forAll(interfaceLabels_, i)
         {
-
-            const label celli = interfaceLabels_[i]; 
+            const label celli = interfaceLabels_[i];
             vector n(0,0,0);
             if(mag(normal_[celli]) != 0)
             {
@@ -259,6 +258,7 @@ void Foam::reconstruction::isoRDF::reconstruct()
 
         normal_.correctBoundaryConditions();
         centre_.correctBoundaryConditions();
+
         // nextToInterface was set in setInitNormals
         RDF_.constructRDF
         (
@@ -277,7 +277,6 @@ void Foam::reconstruction::isoRDF::reconstruct()
         forAllIter(Map<scalar>, residual, iter)
         {
             res[count++] = iter();
-  //          Info << iter() << endl;
         }
         Info << "current residual absolute = " << gAverage(res) << endl;
 
@@ -298,4 +297,3 @@ void Foam::reconstruction::isoRDF::reconstruct()
     }
 
 }
-

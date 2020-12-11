@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -79,7 +79,6 @@ class isoRDF : public reconstructionSchemes
     //- Reference to mesh
     const fvMesh& mesh_;
 
-
     //- VOF field interpolated to mesh points
     scalarField ap_;
 
@@ -139,14 +138,14 @@ class isoRDF : public reconstructionSchemes
         volScalarField& alpha1,
         const surfaceScalarField& phi,
         const volVectorField& U,
-        dictionary& dict
+        const dictionary& dict
     );
 
     //- Destructor
     virtual ~isoRDF();
 
     //- constructs the interface
-    virtual void reconstruct();
+    virtual void reconstruct(bool forceUpdate = true);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

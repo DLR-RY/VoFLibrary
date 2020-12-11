@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-	reconstructionSchemes RECONSCHEME;
+	reconstructionScheme RECONSCHEME;
 	//gradAlphaCoeffs
 	iterations 10;
 	interpolateNormal false;

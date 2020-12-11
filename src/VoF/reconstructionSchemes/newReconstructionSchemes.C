@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -21,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "reconstructionSchemes.H"
+#include "messageStream.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -31,35 +38,37 @@ Foam::reconstructionSchemes::New
     volScalarField& alpha1,
     const surfaceScalarField& phi,
     const volVectorField& U,
-    dictionary& dict
+    const dictionary& dict
 )
 {
-
-    word reconstructionSchemesTypeName
-    (
-        dict.lookup("reconstructionSchemes")
-    );
-
-    Info<< "Selecting reconstructionSchemes: "
-        << reconstructionSchemesTypeName << endl;
-
-    componentsConstructorTable::iterator cstrIter =
-        componentsConstructorTablePtr_
-            ->find(reconstructionSchemesTypeName);
-
-    if (cstrIter == componentsConstructorTablePtr_->end())
+    if(!dict.found("reconstructionScheme"))
     {
-        FatalErrorIn
-        (
-            "reconstructionSchemes::New"
-        )   << "Unknown reconstructionSchemes type "
-            << reconstructionSchemesTypeName << endl << endl
-            << "Valid  reconstructionSchemess are : " << endl
+        Warning 
+            << "Entry '" 
+            << "reconstructionScheme" << "' not found in dictionary "
+            << dict.name() << nl
+            << "using default " << endl;
+    }
+    const word schemeType
+    (
+        dict.lookupOrDefault<word>("reconstructionScheme", "isoAlpha")
+    );
+    
+    Info<< "Selecting reconstructionScheme: " << schemeType << endl;
+
+    auto cstrIter = componentsConstructorTablePtr_->find(schemeType);
+
+    if (!cstrIter.found())
+    {
+        FatalErrorInFunction
+            << "Unknown reconstructionSchemes type "
+            << schemeType << nl << nl
+            << "Valid  reconstructionSchemess are : " << nl
             << componentsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<reconstructionSchemes>(cstrIter()( alpha1, phi,U,dict));
+    return autoPtr<reconstructionSchemes>(cstrIter()( alpha1, phi, U, dict));
 }
 
 

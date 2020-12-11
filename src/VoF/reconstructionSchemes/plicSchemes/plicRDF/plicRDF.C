@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,11 +28,11 @@ License
 
 
 #include "plicRDF.H"
-#include "addToRunTimeSelectionTable.H"
-
 #include "interpolationCellPoint.H"
 #include "fvc.H"
 #include "leastSquareGrad.H"
+#include "addToRunTimeSelectionTable.H"
+#include "alphaContactAngleFvPatchScalarField.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -43,53 +49,66 @@ namespace Foam
 void Foam::reconstruction::plicRDF::interpolateNormal()
 {
     scalar dt = mesh_.time().deltaTValue();
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
 
     leastSquareGrad<scalar> lsGrad("polyDegree1",mesh_.geometricD());
-    
-    exchangeFields_.setUpCommforZone(interfaceCell_,false);
 
-    Map<vector> mapCentre(exchangeFields_.getDatafromOtherProc(interfaceCell_,centre_));
-    Map<vector> mapNormal(exchangeFields_.getDatafromOtherProc(interfaceCell_,normal_));
+    exchangeFields.setUpCommforZone(interfaceCell_,false);
 
-    Map<vector> mapCC (exchangeFields_.getDatafromOtherProc(interfaceCell_,mesh_.C()));
-    Map<scalar> mapAlpha (exchangeFields_.getDatafromOtherProc(interfaceCell_,alpha1_));
+    Map<vector> mapCentre
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, centre_)
+    );
+    Map<vector> mapNormal
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, normal_)
+    );
 
-    DynamicField<vector > cellCentre(100); // should be big enough avoids resizing
+    Map<vector> mapCC
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, mesh_.C())
+    );
+    Map<scalar> mapAlpha
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, alpha1_)
+    );
+
+    DynamicField<vector > cellCentre(100);
     DynamicField<scalar > alphaValues(100);
 
     DynamicList<vector> foundNormals(30);
 
-    const labelListList& stencil = exchangeFields_.getStencil();
+    const labelListList& stencil = exchangeFields.getStencil();
 
     forAll(interfaceLabels_, i)
     {
-        //if(interfaceCell_[celli])
-        //{
-        const label celli = interfaceLabels_[i]; 
+        const label celli = interfaceLabels_[i];
         vector estimatedNormal = vector::zero;
         scalar weight = 0;
         foundNormals.clear();
-        forAll(stencil[celli],i)
+        forAll(stencil[celli], i)
         {
             const label& gblIdx = stencil[celli][i];
-            vector n = exchangeFields_.getValue(normal_,mapNormal,gblIdx);
+            vector n =
+                exchangeFields.getValue(normal_, mapNormal, gblIdx);
             point p = mesh_.C()[celli]-U_[celli]*dt;
-            if(mag(n) != 0)
+            if (mag(n) != 0)
             {
                 n /= mag(n);
-                vector centre = exchangeFields_.getValue(centre_,mapCentre,gblIdx);
-                vector distanceToIntSeg = (tensor::I- n*n) & (p - centre);// project vector in plane
-                estimatedNormal += n /max(mag(distanceToIntSeg),SMALL);
-                weight += 1/max(mag(distanceToIntSeg),SMALL);
+                vector centre =
+                    exchangeFields.getValue(centre_, mapCentre, gblIdx);
+                vector distanceToIntSeg = (tensor::I- n*n) & (p - centre);
+                estimatedNormal += n /max(mag(distanceToIntSeg), SMALL);
+                weight += 1/max(mag(distanceToIntSeg), SMALL);
                 foundNormals.append(n);
             }
         }
 
-        if(weight != 0 && mag(estimatedNormal) != 0)
+        if (weight != 0 && mag(estimatedNormal) != 0)
         {
             estimatedNormal /= weight;
             estimatedNormal /= mag(estimatedNormal);
-        }     
+        }
 
         bool tooCoarse = false;
 
@@ -114,72 +133,87 @@ void Foam::reconstruction::plicRDF::interpolateNormal()
         // smallDist is always smallDist
         if (mag(estimatedNormal) != 0 && !tooCoarse)
         {
-            //interfaceNormal_.set(celli,estimatedNormal);
             interfaceNormal_[i] = estimatedNormal;
         }
         else
-        { 
-            cellCentre.clear(); 
+        {
+            cellCentre.clear();
             alphaValues.clear();
 
             forAll(stencil[celli],i)
             {
                 const label& gblIdx = stencil[celli][i];
-                cellCentre.append(exchangeFields_.getValue(mesh_.C(),mapCC,gblIdx));
-                alphaValues.append(exchangeFields_.getValue(alpha1_,mapAlpha,gblIdx));
+                cellCentre.append
+                (
+                    exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+                );
+                alphaValues.append
+                (
+                    exchangeFields.getValue(alpha1_, mapAlpha, gblIdx)
+                );
             }
-
             cellCentre -= mesh_.C()[celli];
-            //interfaceNormal_.set(celli,lsGrad.grad(cellCentre,alphaValues));
-            interfaceNormal_[i] = lsGrad.grad(cellCentre,alphaValues);
+            interfaceNormal_[i] = lsGrad.grad(cellCentre, alphaValues);
         }
-    
+
     }
 }
 
 void Foam::reconstruction::plicRDF::gradSurf(const volScalarField& phi)
 {
-    leastSquareGrad<scalar> lsGrad("polyDegree1",mesh_.geometricD());
+    leastSquareGrad<scalar> lsGrad("polyDegree1", mesh_.geometricD());
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
 
-    exchangeFields_.setUpCommforZone(interfaceCell_,false);
+    exchangeFields.setUpCommforZone(interfaceCell_, false);
 
-    Map<vector> mapCC(exchangeFields_.getDatafromOtherProc(interfaceCell_,mesh_.C()));
-    Map<scalar> mapPhi(exchangeFields_.getDatafromOtherProc(interfaceCell_,phi));
+    Map<vector> mapCC
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, mesh_.C())
+    );
+    Map<scalar> mapPhi
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, phi)
+    );
 
-    DynamicField<vector > cellCentre(100); // should be big enough avoids resizing
-    DynamicField<scalar > phiValues(100);
+    DynamicField<vector> cellCentre(100);
+    DynamicField<scalar> phiValues(100);
 
-    const labelListList& stencil = exchangeFields_.getStencil();
+    const labelListList& stencil = exchangeFields.getStencil();
 
     forAll(interfaceLabels_, i)
     {
-        //if(interfaceCell_[celli])
-        //{
-        const label celli = interfaceLabels_[i]; 
-        cellCentre.clear(); 
+        const label celli = interfaceLabels_[i];
+
+        cellCentre.clear();
         phiValues.clear();
 
-        forAll(stencil[celli],i)
+        for (const label gblIdx : stencil[celli])
         {
-            const label& gblIdx = stencil[celli][i];
-            cellCentre.append(exchangeFields_.getValue(mesh_.C(),mapCC,gblIdx));
-            phiValues.append(exchangeFields_.getValue(phi,mapPhi,gblIdx));
+            cellCentre.append
+            (
+                exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+            );
+            phiValues.append
+            (
+                exchangeFields.getValue(phi, mapPhi, gblIdx)
+            );
         }
 
         cellCentre -= mesh_.C()[celli];
-        interfaceNormal_[i] = lsGrad.grad(cellCentre,phiValues);
-        // Info << " grad celli " << celli  << " vector " << interfaceNormal_[i] << endl;
-        
+        interfaceNormal_[i] = lsGrad.grad(cellCentre, phiValues);
     }
 }
 
+
 void Foam::reconstruction::plicRDF::setInitNormals(bool interpolate)
 {
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
+
     interfaceLabels_.clear();
-    //interfaceNormal_.clear();
-    forAll(alpha1_,celli)
+
+    forAll(alpha1_, celli)
     {
-        if(sIterPLIC_.isASurfaceCell(alpha1_[celli]))
+        if (sIterPLIC_.isASurfaceCell(alpha1_[celli]))
         {
             interfaceCell_[celli] = true; // is set to false earlier
             interfaceLabels_.append(celli);
@@ -187,14 +221,11 @@ void Foam::reconstruction::plicRDF::setInitNormals(bool interpolate)
     }
     interfaceNormal_.setSize(interfaceLabels_.size());
 
-    // resizes nextToInterfaces
-    RDF_.markCellsNearSurf(interfaceCell_,1);
+    RDF_.markCellsNearSurf(interfaceCell_, 1);
     const boolList& nextToInterface_ = RDF_.nextToInterface();
-    exchangeFields_.updateStencil(nextToInterface_);
+    exchangeFields.updateStencil(nextToInterface_);
 
-
-
-    if(interpolate)
+    if (interpolate)
     {
         interpolateNormal();
     }
@@ -204,43 +235,47 @@ void Foam::reconstruction::plicRDF::setInitNormals(bool interpolate)
     }
 }
 
+
 void Foam::reconstruction::plicRDF::calcResidual
 (
-        Map<scalar>& normalResidual,
-        Map<scalar>& avgAngle
+    Map<scalar>& normalResidual,
+    Map<scalar>& avgAngle
 )
 {
-    exchangeFields_.setUpCommforZone(interfaceCell_,false);
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
+    exchangeFields.setUpCommforZone(interfaceCell_,false);
 
-    Map<vector> mapNormal(exchangeFields_.getDatafromOtherProc(interfaceCell_,normal_));
+    Map<vector> mapNormal
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, normal_)
+    );
 
-    const labelListList& stencil = exchangeFields_.getStencil();
+    const labelListList& stencil = exchangeFields.getStencil();
 
+    normalResidual.clear();
 
-    normalResidual.clear(); // why
-    
     forAll(interfaceLabels_, i)
     {
-         const label celli = interfaceLabels_[i];
-        if(mag(normal_[celli]) == 0 || mag(interfaceNormal_[i]) == 0 )
+        const label celli = interfaceLabels_[i];
+        if (mag(normal_[celli]) == 0 || mag(interfaceNormal_[i]) == 0 )
         {
             continue;
-        }  
+        }
 
         scalar avgDiffNormal = 0;
         scalar maxDiffNormal = GREAT;
         scalar weight= 0;
-        const vector cellNormal = normal_[celli]/mag(normal_[celli]); 
+        const vector cellNormal = normal_[celli]/mag(normal_[celli]);
 
-        forAll(stencil[celli], i)
+        for (const label gblIdx : stencil[celli])
         {
-            const label gblIdx = stencil[celli][i];
-            vector normal = exchangeFields_.getValue(normal_,mapNormal,gblIdx);
+            vector normal =
+                exchangeFields.getValue(normal_, mapNormal, gblIdx);
 
-            if(mag(normal) != 0 && i != 0)
+            if (mag(normal) != 0 && i != 0)
             {
                 vector n = normal/mag(normal);
-                scalar cosAngle = max(min((cellNormal & n),1),-1);
+                scalar cosAngle = max(min((cellNormal & n), 1), -1);
                 avgDiffNormal += acos(cosAngle) * mag(normal);
                 weight += mag(normal);
                 if(cosAngle < maxDiffNormal)
@@ -250,7 +285,7 @@ void Foam::reconstruction::plicRDF::calcResidual
             }
         }
 
-        if(weight != 0)
+        if (weight != 0)
         {
             avgDiffNormal /= weight;
         }
@@ -262,21 +297,126 @@ void Foam::reconstruction::plicRDF::calcResidual
         vector newCellNormal = interfaceNormal_[i];
         newCellNormal /= mag(newCellNormal);
         scalar normalRes = (1 - (cellNormal & newCellNormal));
-        //Info << "celli "  << celli << " cellNormal " << cellNormal << " newCellNormal " << newCellNormal  << endl;
-        avgAngle.insert(celli,avgDiffNormal);
-        normalResidual.insert(celli,normalRes);
-        
+        avgAngle.insert(celli, avgDiffNormal);
+        normalResidual.insert(celli, normalRes);
     }
 }
+
+void Foam::reconstruction::plicRDF::centreAndNormalBC()
+{
+    scalar convertToRad = Foam::constant::mathematical::pi/180.0;
+
+    // check if face is cut
+    cutFacePLIC cutFace(mesh_);
+
+    const volScalarField::Boundary& abf = alpha1_.boundaryField();
+    volVectorField::Boundary& cbf = centre_.boundaryFieldRef();
+    volVectorField::Boundary& nbf = normal_.boundaryFieldRef();
+
+    const fvBoundaryMesh& boundary = mesh_.boundary();
+
+    // we need a surfaceVectorField to compute theta
+    surfaceVectorField normalf = fvc::interpolate(normal_);
+
+    forAll(boundary, patchi)
+    {
+        if (isA<alphaContactAngleFvPatchScalarField>(abf[patchi]))
+        {
+            forAll(normalf.boundaryFieldRef()[patchi],i)
+            {
+                const label celli = boundary[patchi].faceCells()[i];
+                vector n = normal_[celli];
+                if(mag(n) != 0)
+                {
+                    n /= mag(n);
+                    normalf.boundaryFieldRef()[patchi][i] = n;
+                }
+            }
+        }
+    }
+
+    forAll(boundary, patchi)
+    {
+        if (isA<alphaContactAngleFvPatchScalarField>(abf[patchi]))
+        {
+            alphaContactAngleFvPatchScalarField& acap =
+                const_cast<alphaContactAngleFvPatchScalarField&>
+                (
+                    refCast<const alphaContactAngleFvPatchScalarField>
+                    (
+                        abf[patchi]
+                    )
+                );
+
+            fvsPatchVectorField& nHatp = normalf.boundaryFieldRef()[patchi];
+            const scalarField theta
+            (
+                convertToRad*acap.theta(U_.boundaryField()[patchi], nHatp)
+            );
+
+            const vectorField nf
+            (
+                boundary[patchi].nf()
+            );
+
+            // Reset nHatp to correspond to the contact angle
+            forAll(nbf[patchi],i)
+            {
+                const label celli = boundary[patchi].faceCells()[i];
+                const label faceI = boundary[patchi].start() + i;
+                vector n = normal_[celli];
+                if(mag(n) != 0)
+                {
+                    n /= mag(n);
+                    label cutStatus = cutFace.calcSubFace
+                    (
+                        faceI,
+                        n,
+                        centre_[celli]
+                    );
+
+                    if(cutStatus == 0)
+                    {
+                        //const point cutEdgeCentre = average(cutFace.surfacePoints());
+
+                        // project Normal on the face
+                        vector projN = (tensor::I - nf[i]*nf[i]) & n;
+
+                        // normalise
+                        projN /= mag(projN) + SMALL;
+
+                        vector nTheta = sin(theta[i])*nf[i] - cos(theta[i])*projN;
+
+                        scalar proJDist = mag((boundary[patchi].Cf()[i] - centre_[celli]) & nf[i]);
+                        vector nHat =  cos(theta[i])*nf[i] + sin(theta[i])*projN;
+
+                        cbf[patchi][i] = centre_[celli] + 2*nTheta/boundary[patchi].deltaCoeffs()[i]; // should point outside of the domain
+                        nbf[patchi][i] = nHat*mag(normal_[celli]);
+
+                    }
+
+                }
+                else
+                {
+                    cbf[patchi][i] = vector::zero;
+                    nbf[patchi][i] = vector::zero;
+                }
+            }
+
+            acap.evaluate();
+        }
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::reconstruction::plicRDF::plicRDF
 (
-        volScalarField& alpha1,
-        const surfaceScalarField& phi,
-        const volVectorField& U,
-        dictionary& dict
+    volScalarField& alpha1,
+    const surfaceScalarField& phi,
+    const volVectorField& U,
+    const dictionary& dict
 )
 :
     reconstructionSchemes
@@ -291,48 +431,42 @@ Foam::reconstruction::plicRDF::plicRDF
 
     interfaceNormal_(0.2*mesh_.nCells()),
 
-
-    vof2IsoTol_(readScalar(modelDict().lookup("vof2IsoTol" ))),
-    surfCellTol_(readScalar(modelDict().lookup("surfCellTol" ))),
-    tol_(modelDict().lookupOrDefault("tol" ,1e-6)),
-    relTol_(modelDict().lookupOrDefault("relTol" ,0.1)),
-    iteration_(modelDict().lookupOrDefault("iterations" ,5)),
-    interpolateNormal_(modelDict().lookupOrDefault("interpolateNormal" ,true)),
-    RDF_(mesh_),
-    exchangeFields_(zoneDistribute::New(mesh_)),
+    isoFaceTol_(modelDict().lookupOrDefault<scalar>("isoFaceTol", 1e-8)),
+    surfCellTol_(modelDict().lookupOrDefault<scalar>("surfCellTol", 1e-8)),
+    tol_(modelDict().lookupOrDefault("tol" , 1e-6)),
+    relTol_(modelDict().lookupOrDefault("relTol" , 0.1)),
+    iteration_(modelDict().lookupOrDefault("iterations" , 5)),
+    interpolateNormal_(modelDict().lookupOrDefault("interpolateNormal", true)),
+    RDF_(reconstructedDistanceFunction::New(alpha1.mesh())),
     sIterPLIC_(mesh_,surfCellTol_)
-
 {
-  //interfaceNormal_ = fvc::grad(alpha1_);
     setInitNormals(false);
-    // Info << "grad Alpha interfaceNormal_ " << interfaceNormal_ << endl;
 
-    centre_ = dimensionedVector("centre",dimLength,vector::zero);
-    normal_ = dimensionedVector("normal",dimArea,vector::zero);
+    centre_ = dimensionedVector("centre", dimLength, vector::zero);
+    normal_ = dimensionedVector("normal", dimArea, vector::zero);
 
     forAll(interfaceLabels_, i)
     {
         const label celli = interfaceLabels_[i];
-        if(mag(interfaceNormal_[i]) == 0)
+        if (mag(interfaceNormal_[i]) == 0)
         {
             continue;
-        } 
+        }
         sIterPLIC_.vofCutCell
         (
             celli,
             alpha1_[celli],
-            vof2IsoTol_,
+            isoFaceTol_,
             100,
             interfaceNormal_[i]
         );
 
-        if(sIterPLIC_.cellStatus() == 0)
+        if (sIterPLIC_.cellStatus() == 0)
         {
-
             normal_[celli] = sIterPLIC_.surfaceArea();
             centre_[celli] = sIterPLIC_.surfaceCentre();
-            if(mag(normal_[celli]) == 0)
-            { 
+            if (mag(normal_[celli]) == 0)
+            {
                 normal_[celli] = vector::zero;
                 centre_[celli] = vector::zero;
             }
@@ -344,27 +478,17 @@ Foam::reconstruction::plicRDF::plicRDF
         }
     }
 
-    // Info << "interfaceLabels_ " << interfaceLabels_ << endl;
-    // Info << "interfaceNormal_ " << interfaceNormal_ << endl;
-   
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::reconstruction::plicRDF::~plicRDF()
-{}
-
-// * * * * * * * * * * * * * * Protected Access Member Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-
-// ************************************************************************* //
-void Foam::reconstruction::plicRDF::reconstruct()
+void Foam::reconstruction::plicRDF::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if(uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }
@@ -378,13 +502,12 @@ void Foam::reconstruction::plicRDF::reconstruct()
         }
     }
     interfaceCell_ = false;
-    //interfaceNormal_.clear();
 
     // sets interfaceCell_ and interfaceNormal
     setInitNormals(interpolateNormal_);
 
-    centre_ = dimensionedVector("centre",dimLength,vector::zero);
-    normal_ = dimensionedVector("normal",dimArea,vector::zero);
+    centre_ = dimensionedVector("centre", dimLength, vector::zero);
+    normal_ = dimensionedVector("normal", dimArea, vector::zero);
 
     // nextToInterface is update on setInitNormals
     const boolList& nextToInterface_ = RDF_.nextToInterface();
@@ -396,15 +519,15 @@ void Foam::reconstruction::plicRDF::reconstruct()
         forAll(interfaceLabels_, i)
         {
             const label celli = interfaceLabels_[i];
-            if(mag(interfaceNormal_[i]) == 0 || tooCoarse.found(celli))
+            if (mag(interfaceNormal_[i]) == 0 || tooCoarse.found(celli))
             {
                 continue;
-            } 
+            }
             sIterPLIC_.vofCutCell
             (
                 celli,
                 alpha1_[celli],
-                vof2IsoTol_,
+                isoFaceTol_,
                 100,
                 interfaceNormal_[i]
             );
@@ -415,16 +538,13 @@ void Foam::reconstruction::plicRDF::reconstruct()
                 normal_[celli] = sIterPLIC_.surfaceArea();
                 centre_[celli] = sIterPLIC_.surfaceCentre();
                 if(mag(normal_[celli]) == 0)
-                { 
+                {
                     normal_[celli] = vector::zero;
                     centre_[celli] = vector::zero;
                 }
-
-                //interfaceCell_[cellI]=true;
             }
             else
             {
-                //interfaceNormal_[i] = vector::zero;
                 normal_[celli] = vector::zero;
                 centre_[celli] = vector::zero;
             }
@@ -434,24 +554,23 @@ void Foam::reconstruction::plicRDF::reconstruct()
         centre_.correctBoundaryConditions();
         Map<scalar> residual;
         Map<scalar> avgAngle;
-        //if(iter < (iteration_-1))
-            // Cell gradient of alpha
 
-        surfaceVectorField::Boundary nHatb = mesh_.Sf().boundaryField();
+        surfaceVectorField::Boundary nHatb(mesh_.Sf().boundaryField());
         nHatb *= 1/(mesh_.magSf().boundaryField());
 
         {
+            centreAndNormalBC();
             RDF_.constructRDF
             (
                 nextToInterface_,
                 centre_,
                 normal_,
-                exchangeFields_,
+                exchangeFields,
                 false
             );
-            RDF_.updateContactAngle(alpha1_,U_,nHatb);
+            // RDF_.updateContactAngle(alpha1_, U_, nHatb);
             gradSurf(RDF_);
-            calcResidual(residual,avgAngle);
+            calcResidual(residual, avgAngle);
         }
 
 
@@ -462,10 +581,9 @@ void Foam::reconstruction::plicRDF::reconstruct()
         Map<scalar>::iterator resIter = residual.begin();
         Map<scalar>::iterator avgAngleIter = avgAngle.begin();
 
-        while(resIter != residual.end())
+        while (resIter.found())
         {
-
-            if(avgAngleIter() > 0.52 && iter > 0) // 30 deg
+            if (avgAngleIter() > 0.26 && iter > 0) // 15 deg
             {
                 tooCoarse.set(resIter.key());
             }
@@ -474,9 +592,9 @@ void Foam::reconstruction::plicRDF::reconstruct()
                 avgRes += resIter();
                 scalar normRes = 0;
                 scalar discreteError = 0.01*sqr(avgAngleIter());
-                if(discreteError != 0)
+                if (discreteError != 0)
                 {
-                    normRes= resIter()/max(discreteError,tol_);
+                    normRes= resIter()/max(discreteError, tol_);
                 }
                 else
                 {
@@ -487,7 +605,6 @@ void Foam::reconstruction::plicRDF::reconstruct()
 
             }
 
-
             ++resIter;
             ++avgAngleIter;
         }
@@ -496,7 +613,7 @@ void Foam::reconstruction::plicRDF::reconstruct()
         reduce(avgNormRes,sumOp<scalar>());
         reduce(resCounter,sumOp<label>());
 
-        if(resCounter == 0) // avoid division  by zero and leave loop
+        if (resCounter == 0) // avoid division  by zero and leave loop
         {
             resCounter = 1;
             avgRes = 0;
@@ -504,38 +621,45 @@ void Foam::reconstruction::plicRDF::reconstruct()
         }
 
 
-        if(iter == 0)
+        if (iter == 0)
         {
-            Info << "intial residual absolute = " << avgRes/resCounter << endl;
-            Info << "intial residual normalized = " << avgNormRes/resCounter << endl;
+            DebugInfo<< "intial residual absolute = "
+                << avgRes/resCounter << endl;
+            DebugInfo<< "intial residual normalized = "
+                << avgNormRes/resCounter
+                << endl;
         }
 
-        if(((avgNormRes/resCounter < relTol_ || avgRes/resCounter < tol_) && (iter >= 1 )) || iter + 1  == iteration_)
+        if
+        (
+            (
+                (avgNormRes/resCounter < relTol_ || avgRes/resCounter < tol_)
+             && (iter >= 1 )
+            )
+         || iter + 1  == iteration_
+        )
         {
-            Info << "iterations = " << iter << endl;
-            Info << "final residual absolute = " << avgRes/resCounter << endl;
-            Info << "final residual normalized = " << avgNormRes/resCounter << endl;
+            DebugInfo << "iterations = " << iter << endl;
+            DebugInfo << "final residual absolute = "
+                << avgRes/resCounter << endl;
+            DebugInfo << "final residual normalized = " << avgNormRes/resCounter
+                << endl;
             break;
         }
-
     }
-
 }
 
-void Foam::reconstruction::plicRDF::mapAlphaField()
+
+void Foam::reconstruction::plicRDF::mapAlphaField() const
 {
     // without it we seem to get a race condition
     mesh_.C();
-    normal_;
-    centre_;
-    alpha1_;
 
     cutCellPLIC cutCell(mesh_);
-    
-    
-    forAll(normal_,celli)
+
+    forAll(normal_, celli)
     {
-        if(mag(normal_[celli]) != 0)
+        if (mag(normal_[celli]) != 0)
         {
             vector n = normal_[celli]/mag(normal_[celli]);
             scalar cutValue = (centre_[celli] - mesh_.C()[celli]) & (n);
@@ -546,9 +670,11 @@ void Foam::reconstruction::plicRDF::mapAlphaField()
                 n
             );
             alpha1_[celli] = cutCell.VolumeOfFluid();
-            // alpha1_.oldTime()[celli] = cutCell.VolumeOfFluid();
 
         }
     }
-    // alpha1_.correctBoundaryConditions();
+    alpha1_.correctBoundaryConditions();
+    alpha1_.oldTime () = alpha1_;
+    alpha1_.oldTime().correctBoundaryConditions();
+
 }

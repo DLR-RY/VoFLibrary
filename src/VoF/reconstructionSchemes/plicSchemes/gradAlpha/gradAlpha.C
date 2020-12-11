@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,14 +26,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-
 #include "gradAlpha.H"
-#include "addToRunTimeSelectionTable.H"
-
 #include "fvc.H"
 #include "leastSquareGrad.H"
-
-
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -36,7 +38,7 @@ namespace Foam
 namespace reconstruction
 {
     defineTypeNameAndDebug(gradAlpha, 0);
-    addToRunTimeSelectionTable(reconstructionSchemes,gradAlpha, components);
+    addToRunTimeSelectionTable(reconstructionSchemes, gradAlpha, components);
 }
 }
 
@@ -45,37 +47,49 @@ void Foam::reconstruction::gradAlpha::gradSurf(const volScalarField& phi)
 {
     leastSquareGrad<scalar> lsGrad("polyDegree1",mesh_.geometricD());
 
-    exchangeFields_.setUpCommforZone(interfaceCell_,false);
+    zoneDistribute& exchangeFields = zoneDistribute::New(mesh_);
 
-    Map<vector> mapCC(exchangeFields_.getDatafromOtherProc(interfaceCell_,mesh_.C()));
-    Map<scalar> mapPhi(exchangeFields_.getDatafromOtherProc(interfaceCell_,phi));
+    exchangeFields.setUpCommforZone(interfaceCell_,true);
 
-    DynamicField<vector > cellCentre(100); // should be big enough avoids resizing
-    DynamicField<scalar > phiValues(100);
+    Map<vector> mapCC
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, mesh_.C())
+    );
+    Map<scalar> mapPhi
+    (
+        exchangeFields.getDatafromOtherProc(interfaceCell_, phi)
+    );
 
-    const labelListList& stencil = exchangeFields_.getStencil();
+    DynamicField<vector> cellCentre(100);
+    DynamicField<scalar> phiValues(100);
+
+    const labelListList& stencil = exchangeFields.getStencil();
 
     forAll(interfaceLabels_, i)
     {
-        //if(interfaceCell_[celli])
-        //{
-        const label celli = interfaceLabels_[i]; 
-        cellCentre.clear(); 
+        const label celli = interfaceLabels_[i];
+
+        cellCentre.clear();
         phiValues.clear();
 
-        forAll(stencil[celli],i)
+        for (const label gblIdx : stencil[celli])
         {
-            const label& gblIdx = stencil[celli][i];
-            cellCentre.append(exchangeFields_.getValue(mesh_.C(),mapCC,gblIdx));
-            phiValues.append(exchangeFields_.getValue(phi,mapPhi,gblIdx));
+            cellCentre.append
+            (
+                exchangeFields.getValue(mesh_.C(), mapCC, gblIdx)
+            );
+            phiValues.append
+            (
+                exchangeFields.getValue(phi, mapPhi, gblIdx)
+            );
         }
 
         cellCentre -= mesh_.C()[celli];
-        interfaceNormal_[i] = lsGrad.grad(cellCentre,phiValues);
-        // Info << " grad celli " << celli  << " vector " << interfaceNormal_[i] << endl;
-        
+        //interfaceNormal_[i] = lsGrad.grad(cellCentre, phiValues);
+        interfaceNormal_[i] = vector(2,1,0);
     }
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -84,7 +98,7 @@ Foam::reconstruction::gradAlpha::gradAlpha
     volScalarField& alpha1,
     const surfaceScalarField& phi,
     const volVectorField& U,
-    dictionary& dict
+    const dictionary& dict
 )
 :
     reconstructionSchemes
@@ -97,42 +111,25 @@ Foam::reconstruction::gradAlpha::gradAlpha
     ),
     mesh_(alpha1.mesh()),
     interfaceNormal_(fvc::grad(alpha1)),
-    vof2IsoTol_(readScalar(modelDict().lookup("vof2IsoTol" ))),
-    surfCellTol_(readScalar(modelDict().lookup("surfCellTol" ))),
-    exchangeFields_(zoneDistribute::New(mesh_)),
+    isoFaceTol_(modelDict().lookupOrDefault<scalar>("isoFaceTol", 1e-8)),
+    surfCellTol_(modelDict().lookupOrDefault<scalar>("surfCellTol", 1e-8)),
     sIterPLIC_(mesh_,surfCellTol_)
-    
-
-
-
-
 {
-  writeVTK_ =  readBool( modelDict().lookup("writeVTK" ));
-  reconstruct();
+    reconstruct();
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::reconstruction::gradAlpha::~gradAlpha()
-{
-
-}
-
-// * * * * * * * * * * * * * * Protected Access Member Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-
-// ************************************************************************* //
-void Foam::reconstruction::gradAlpha::reconstruct()
+void Foam::reconstruction::gradAlpha::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if(uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }
-    
+
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
@@ -144,7 +141,7 @@ void Foam::reconstruction::gradAlpha::reconstruct()
     interfaceCell_ = false;
 
     interfaceLabels_.clear();
-    //interfaceNormal_.clear();
+    
     forAll(alpha1_,celli)
     {
         if(sIterPLIC_.isASurfaceCell(alpha1_[celli]))
@@ -154,46 +151,75 @@ void Foam::reconstruction::gradAlpha::reconstruct()
         }
     }
     interfaceNormal_.setSize(interfaceLabels_.size());
+    centre_ = dimensionedVector("centre", dimLength, vector::zero);
+    normal_ = dimensionedVector("normal", dimArea, vector::zero);
 
     gradSurf(alpha1_);
 
     forAll(interfaceLabels_, i)
     {
         const label celli = interfaceLabels_[i];
-        if(mag(interfaceNormal_[i]) == 0)
+        if (mag(interfaceNormal_[i]) == 0)
         {
             continue;
-        } 
+        }
 
         sIterPLIC_.vofCutCell
         (
             celli,
             alpha1_[celli],
-            vof2IsoTol_,
+            isoFaceTol_,
             100,
             interfaceNormal_[i]
         );
 
-        if(sIterPLIC_.cellStatus() == 0)
+        if (sIterPLIC_.cellStatus() == 0)
         {
-
             normal_[celli] = sIterPLIC_.surfaceArea();
             centre_[celli] = sIterPLIC_.surfaceCentre();
-            if(mag(normal_[celli]) == 0)
-            { 
+            if (mag(normal_[celli]) == 0)
+            {
                 normal_[celli] = vector::zero;
                 centre_[celli] = vector::zero;
             }
 
-            //interfaceCell_[cellI]=true;
         }
         else
         {
-            //interfaceNormal_[i] = vector::zero;
             normal_[celli] = vector::zero;
             centre_[celli] = vector::zero;
         }
     }
-
 }
 
+void Foam::reconstruction::gradAlpha::mapAlphaField() const
+{
+    // without it, we seem to get a race condition
+    mesh_.C();
+
+    cutCellPLIC cutCell(mesh_);
+
+    forAll(normal_, celli)
+    {
+        if (mag(normal_[celli]) != 0)
+        {
+            vector n = normal_[celli]/mag(normal_[celli]);
+            scalar cutValue = (centre_[celli] - mesh_.C()[celli]) & (n);
+            cutCell.calcSubCell
+            (
+                celli,
+                cutValue,
+                n
+            );
+            alpha1_[celli] = cutCell.VolumeOfFluid();
+
+        }
+    }
+    alpha1_.correctBoundaryConditions();
+    alpha1_.oldTime () = alpha1_;
+    alpha1_.oldTime().correctBoundaryConditions();
+    
+}
+
+
+// ************************************************************************* //

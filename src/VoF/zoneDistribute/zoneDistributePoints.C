@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(zoneDistributePoints, 0);
 }
+
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneDistributePoints::nonEmptyWedgePatch() const
@@ -85,26 +86,28 @@ Foam::zoneDistributePoints::nonEmptyWedgePatch() const
     );
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
 
 Foam::zoneDistributePoints::zoneDistributePoints(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, zoneDistributePoints>(mesh),
+    MeshObject<fvMesh, Foam::TopologicalMeshObject, zoneDistributePoints>(mesh),
     mesh_(mesh),
     //stencil_(getStencilRef()),
     boundaryPoints_(nonEmptyWedgePatch()().meshPoints()),
     isBoundaryPoint_(mesh.nFaces(),false),
     validBoundaryFace_(mesh.nFaces()-mesh.nInternalFaces(),false)
 {
-    
+
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
     for (const polyPatch& pp : patches)
     {
         if
         (
-            !isA<processorPolyPatch>(pp) && 
-            !isA<emptyPolyPatch>(pp) && 
+            !isA<processorPolyPatch>(pp) &&
+            !isA<emptyPolyPatch>(pp) &&
             !isA<wedgePolyPatch>(pp)
         )
         {
@@ -113,42 +116,42 @@ Foam::zoneDistributePoints::zoneDistributePoints(const fvMesh& mesh)
     }
     forAll(boundaryPoints_,i)
     {
-        isBoundaryPoint_[boundaryPoints_[i]] = true; 
+        isBoundaryPoint_[boundaryPoints_[i]] = true;
     }
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::zoneDistributePoints::updateMesh(const mapPolyMesh& mpm)
-{
-    if(mesh_.topoChanging())
-    { 
-        boundaryPoints_ = nonEmptyWedgePatch()().meshPoints();
-        validBoundaryFace_.setSize(mesh_.nFaces()-mesh_.nInternalFaces()); 
-        validBoundaryFace_ = false;
+// void Foam::zoneDistributePoints::updateMesh(const mapPolyMesh& mpm)
+// {
+//     if(mesh_.topoChanging())
+//     {
+//         boundaryPoints_ = nonEmptyWedgePatch()().meshPoints();
+//         validBoundaryFace_.setSize(mesh_.nFaces()-mesh_.nInternalFaces());
+//         validBoundaryFace_ = false;
 
-        const polyBoundaryMesh& patches = mesh_.boundaryMesh();
+//         const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
-        for (const polyPatch& pp : patches)
-        {
-            if
-            (
-                !isA<processorPolyPatch>(pp) && 
-                !isA<emptyPolyPatch>(pp) && 
-                !isA<wedgePolyPatch>(pp)
-            )
-            {
-                validBoundaryFace_[pp.start() - mesh_.nInternalFaces()] = true;
-            }
-        }
-        isBoundaryPoint_.setSize(mesh_.nPoints());
-        isBoundaryPoint_ = false;
-        forAll(boundaryPoints_,i)
-        {
-            isBoundaryPoint_[boundaryPoints_[i]] = true; 
-        }
-    }
-  
-}
+//         for (const polyPatch& pp : patches)
+//         {
+//             if
+//             (
+//                 !isA<processorPolyPatch>(pp) &&
+//                 !isA<emptyPolyPatch>(pp) &&
+//                 !isA<wedgePolyPatch>(pp)
+//             )
+//             {
+//                 validBoundaryFace_[pp.start() - mesh_.nInternalFaces()] = true;
+//             }
+//         }
+//         isBoundaryPoint_.setSize(mesh_.nPoints());
+//         isBoundaryPoint_ = false;
+//         forAll(boundaryPoints_,i)
+//         {
+//             isBoundaryPoint_[boundaryPoints_[i]] = true;
+//         }
+//     }
+
+// }
 
 // ************************************************************************* //

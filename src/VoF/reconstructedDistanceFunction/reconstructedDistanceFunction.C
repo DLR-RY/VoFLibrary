@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -29,6 +29,11 @@ License
 #include "indexedOctree.H"
 #include "treeDataPoint.H"
 #include "alphaContactAngleFvPatchScalarField.H"
+
+namespace Foam
+{
+    defineTypeNameAndDebug(reconstructedDistanceFunction, 0);
+}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -79,12 +84,12 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
     const label neiRingLevel
 )
 {
-    // performance might be improved by increasing the saving last iteations cells
-    // in a Map and loop over the map 
+    // performance might be improved by increasing the saving last iteations
+    // cells in a Map and loop over the map
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(nextToInterface_.size() != mesh_.nCells())
+        if (nextToInterface_.size() != mesh_.nCells())
         {
             nextToInterface_.resize(mesh_.nCells());
         }
@@ -100,10 +105,10 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
     // do coupled face first
     Map<bool> syncMap;
 
-    for(int level = 0;level<=neiRingLevel;level++) 
+    for(int level = 0;level<=neiRingLevel;level++)
     {
         // parallel
-        if(level > 0)
+        if (level > 0)
         {
             forAll(coupledBoundaryPoints_,i)
             {
@@ -118,29 +123,29 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
                     }
                 }
             }
-        
+
             syncTools::syncPointMap(mesh_, syncMap, orEqOp<bool>());
 
             // mark parallel points first
             forAllConstIter(Map<bool>, syncMap, iter)
             {
                 const label pi = iter.key();
-                
-                if(!alreadyMarkedPoint[pi])
+
+                if (!alreadyMarkedPoint[pi])
                 {
                     // loop over all cells attached to the point
-                    forAll(cPoints[pi],j) 
+                    forAll(cPoints[pi],j)
                     {
                         const label& pCelli = cPoints[pi][j];
-                        if(cellDistLevel_[pCelli] == -1)
+                        if (cellDistLevel_[pCelli] == -1)
                         {
                             cellDistLevel_[pCelli] = level;
                             nextToInterface_[pCelli] = true;
                         }
-                        
+
                     }
                 }
-                
+
                 alreadyMarkedPoint[pi] = true;
             }
         }
@@ -148,9 +153,9 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
 
         forAll(cellDistLevel_, celli)
         {
-            if(level == 0)
+            if (level == 0)
             {
-                if(interfaceCells[celli])
+                if (interfaceCells[celli])
                 {
                     cellDistLevel_[celli] = 0;
                     nextToInterface_[celli] = true;
@@ -168,21 +173,22 @@ void Foam::reconstructedDistanceFunction::markCellsNearSurf
                     {
                         const label& pI = pCells[celli][i];
                         // interfacePoint_[pI] = true;
-                        if(!alreadyMarkedPoint[pI])
+                        if (!alreadyMarkedPoint[pI])
                         {
-                            forAll(cPoints[pI],j) // loop over all cells attached to the point
+                            // loop over all cells attached to the point
+                            forAll(cPoints[pI],j)
                             {
                                 const label& pCelli = cPoints[pI][j];
-                                if(cellDistLevel_[pCelli] == -1)
+                                if (cellDistLevel_[pCelli] == -1)
                                 {
                                     cellDistLevel_[pCelli] = level;
                                     nextToInterface_[pCelli] = true;
                                 }
-                                
+
                             }
                         }
                         alreadyMarkedPoint[pI] = true;
- 
+
                     }
                 }
             }
@@ -203,7 +209,7 @@ Foam::reconstructedDistanceFunction::reconstructedDistanceFunction
     (
         IOobject
         (
-            "RDF_",
+            "reconstructedDistanceFunction",
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
@@ -233,6 +239,32 @@ Foam::reconstructedDistanceFunction::reconstructedDistanceFunction
 {
 }
 
+Foam::reconstructedDistanceFunction& Foam::reconstructedDistanceFunction::New(const fvMesh& mesh)
+{
+    bool found = mesh.thisDb().foundObject<reconstructedDistanceFunction>
+    (
+        reconstructedDistanceFunction::typeName
+    );
+    reconstructedDistanceFunction* ptr = nullptr;
+
+    if (found)
+    {
+        ptr = mesh.thisDb().getObjectPtr<reconstructedDistanceFunction>
+        (
+            reconstructedDistanceFunction::typeName
+        );
+
+        return *ptr;
+    }
+
+    reconstructedDistanceFunction* objectPtr =
+        new reconstructedDistanceFunction(mesh);
+
+    regIOobject::store(static_cast<reconstructedDistanceFunction*>(objectPtr));
+
+    return *objectPtr;
+}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
@@ -246,7 +278,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 {
     volScalarField& reconDistFunc = *this;
 
-    if(nextToInterface.size() != centre.size())
+    if (nextToInterface.size() != centre.size())
     {
         FatalErrorInFunction
         << "size of nextToInterface: " << nextToInterface.size()
@@ -259,17 +291,19 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 
     distribute.setUpCommforZone(nextToInterface,updateStencil);
 
-    Map<vector > mapCentres = distribute.getDatafromOtherProc(nextToInterface,centre);
-    Map<vector > mapNormal = distribute.getDatafromOtherProc(nextToInterface,normal);
+    Map<vector > mapCentres =
+        distribute.getDatafromOtherProc(nextToInterface,centre);
+    Map<vector > mapNormal =
+        distribute.getDatafromOtherProc(nextToInterface,normal);
 
     const labelListList& stencil = distribute.getStencil();
 
 
     forAll(nextToInterface,celli)
     {
-        if(nextToInterface[celli])
-        { 
-            if(mag(normal[celli]) != 0) // interface cell
+        if (nextToInterface[celli])
+        {
+            if (mag(normal[celli]) != 0) // interface cell
             {
                 vector n = -normal[celli]/mag(normal[celli]);
                 scalar dist = (centre[celli] - mesh_.C()[celli]) & n;
@@ -284,11 +318,12 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                 forAll(stencil[celli],i)
                 {
                     const label& gblIdx = stencil[celli][i];
-                    vector n = -distribute.getValue(normal,mapNormal,gblIdx); // note the minus
-                    if(mag(n) != 0)
+                    vector n = -distribute.getValue(normal,mapNormal,gblIdx);
+                    if (mag(n) != 0)
                     {
                         n /= mag(n);
-                        vector c = distribute.getValue(centre,mapCentres,gblIdx);
+                        vector c =
+                            distribute.getValue(centre,mapCentres,gblIdx);
                         vector distanceToIntSeg = (c - p);
                         scalar distToSurf = distanceToIntSeg & (n);
                         scalar weight = 0;
@@ -311,19 +346,19 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                 {
                     reconDistFunc[celli] = averageDist / avgWeight;
                 }
-                
+
             }
         }
         else
         {
             reconDistFunc[celli] = 0;
-        }  
+        }
 
     }
 
     forAll(reconDistFunc.boundaryField(), patchI)
     {
-        if(reconDistFunc.boundaryField().types()[patchI] == "calculated")
+        if (reconDistFunc.boundaryField().types()[patchI] == "calculated")
         {
             const polyPatch pp = mesh_.boundaryMesh()[patchI];
             fvPatchScalarField& pRDF = reconDistFunc.boundaryFieldRef()[patchI];
@@ -331,7 +366,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
             {
                 const label& pCellI = pp.faceCells()[i];
 
-                if(nextToInterface_[pCellI])
+                if (nextToInterface_[pCellI])
                 {
                     scalar averageDist = 0;
                     scalar avgWeight = 0;
@@ -340,11 +375,13 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                     forAll(stencil[pCellI],j)
                     {
                         const label& gblIdx = stencil[pCellI][j];
-                        vector n = -distribute.getValue(normal,mapNormal,gblIdx); // note the minus
-                        if(mag(n) != 0)
+                        vector n =
+                            -distribute.getValue(normal,mapNormal,gblIdx);
+                        if (mag(n) != 0)
                         {
                             n /= mag(n);
-                            vector c = distribute.getValue(centre,mapCentres,gblIdx);
+                            vector c =
+                                distribute.getValue(centre,mapCentres,gblIdx);
                             vector distanceToIntSeg = (c - p);
                             scalar distToSurf = distanceToIntSeg & (n);
                             scalar weight = 0;
@@ -370,14 +407,14 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                     else
                     {
                         pRDF[i] = 0;
-                    } 
+                    }
 
 
                 }
                 else
                 {
                     pRDF[i] = 0;
-                } 
+                }
             }
         }
     }
@@ -399,7 +436,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 {
     volScalarField& reconDistFunc = *this;
 
-    if(neiRingLevel != 1 && neiRingLevel != 2)
+    if (neiRingLevel != 1 && neiRingLevel != 2)
     {
         FatalErrorInFunction
         << "currently the maximum distance to surface is two cells  "
@@ -414,7 +451,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 
     forAll(cellDistLevel_,celli)
     {
-        if(cellDistLevel_[celli] >= 0)
+        if (cellDistLevel_[celli] >= 0)
         {
             nextToInterface[celli] = true;
         }
@@ -423,10 +460,12 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
     distribute.setUpCommforZone(nextToInterface);
     Map<Field <vector > > mapCC;
 
-    Map<Field <vector > > mapCentres = distribute.getFields(nextToInterface,centre);
-    Map<Field <vector > > mapNormal = distribute.getFields(nextToInterface,normal);
-    
-    if(neiRingLevel == 2)
+    Map<Field <vector > > mapCentres =
+        distribute.getFields(nextToInterface,centre);
+    Map<Field <vector > > mapNormal =
+        distribute.getFields(nextToInterface,normal);
+
+    if (neiRingLevel == 2)
     {
         mapCC = distribute.getFields(nextToInterface,mesh_.C());
     }
@@ -445,7 +484,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
         const Field <vector >& centres = centreIter();
         const Field <vector >& normals = normalIter();
 
-        if(mag(normals[0]) != 0) // interface cell
+        if (mag(normals[0]) != 0) // interface cell
         {
             vector n = -normals[0]/mag(normals[0]);
             scalar dist = (centres[0] - mesh_.C()[celli]) & n;
@@ -459,7 +498,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 
             forAll(centres,i)
             {
-                if(mag(normals[i]) != 0)
+                if (mag(normals[i]) != 0)
                 {
                     vector n = -normals[i]/mag(normals[i]);
                     vector distanceToIntSeg = (centres[i] - p);
@@ -485,29 +524,29 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
                 reconDistFunc[celli] = averageDist / avgWeight;
             }
 
-            if(neiRingLevel == 2)
+            if (neiRingLevel == 2)
             {
                 const Field <vector >& ccs = ccIter();
                 forAll(stencil[celli],i)
                 {
                     const label gblIdx = stencil[celli][i];
-                    if(globalNumbering.isLocal(gblIdx))
+                    if (globalNumbering.isLocal(gblIdx))
                     {
                         const label idx = globalNumbering.toLocal(gblIdx);
-                        if(idx < mesh_.nCells() && !nextToInterface[idx])
+                        if (idx < mesh_.nCells() && !nextToInterface[idx])
                         {
                             reconDistFunc[idx] = GREAT;
                             forAll(centres,j)
                             {
-                                if(mag(normals[j]) != 0)
+                                if (mag(normals[j]) != 0)
                                 {
                                     vector n = -normals[j]/mag(normals[j]);
                                     scalar distToSurf = (centres[j] - ccs[i]) & (n);
-                                    if(mag(distToSurf) < mag(reconDistFunc[idx]))
+                                    if (mag(distToSurf) < mag(reconDistFunc[idx]))
                                     {
                                         reconDistFunc[idx]  = distToSurf;
                                     }
-                                    
+
                                 }
                             }
                         }
@@ -521,7 +560,7 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
         ++centreIter;
         ++normalIter;
 
-        if(neiRingLevel == 2)
+        if (neiRingLevel == 2)
         {
             ++ccIter;
         }
@@ -534,7 +573,8 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDF
 }
 
 
-const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOctree
+const Foam::volScalarField&
+Foam::reconstructedDistanceFunction::constructRDFOctree
 (
     const boolList& nextToInterface,
     const pointField& centre,
@@ -567,15 +607,15 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
         10,     // leafsize
         3.0     // duplicity
     );
-    
+
     forAll(reconDistFunc,celli)
     {
-        if(nextToInterface[celli])
-        { 
+        if (nextToInterface[celli])
+        {
             const point& p = mesh_.C()[celli];
             pointIndexHit pHit =  surfaceTree.findNearest (p, GREAT);
             const label idx = pHit.index();
-            if(idx == -1)
+            if (idx == -1)
             {
                 reconDistFunc[celli] = 0;
             }
@@ -587,11 +627,47 @@ const Foam::volScalarField&  Foam::reconstructedDistanceFunction::constructRDFOc
                 reconDistFunc[celli] = dist;
             }
 
-        } 
+        }
         else
         {
             reconDistFunc[celli] = 0;
-        } 
+        }
+    }
+
+    forAll(reconDistFunc.boundaryField(), patchI)
+    {
+        if (reconDistFunc.boundaryField().types()[patchI] == "calculated")
+        {
+            const polyPatch pp = mesh_.boundaryMesh()[patchI];
+            fvPatchScalarField& pRDF = reconDistFunc.boundaryFieldRef()[patchI];
+            forAll(pRDF, i)
+            {
+                const label& pCellI = pp.faceCells()[i];
+
+                if (nextToInterface[pCellI])
+                {
+                    const point& p = mesh_.C().boundaryField()[patchI][i];
+                    pointIndexHit pHit =  surfaceTree.findNearest (p, GREAT);
+                    const label idx = pHit.index();
+                    if (idx == -1)
+                    {
+                        pRDF[i] = 0;
+                    }
+                    else
+                    {
+                        vector n = -normals[idx];
+                        n /= mag(n);
+                        scalar dist = (centre[pHit.index()]-p) & n;
+                        pRDF[i] = dist;
+                    }
+
+                }
+                else
+                {
+                    pRDF[i] = 0;
+                }
+            }
+        }
     }
 
     return reconDistFunc;
@@ -630,8 +706,11 @@ void Foam::reconstructedDistanceFunction::updateContactAngle
             (
                 convertToRad*acap.theta(U.boundaryField()[patchi],nHatp)
             );
-            
-            RDFbf[patchi] = 1/acap.patch().deltaCoeffs()*cos(theta) +  RDFbf[patchi].patchInternalField();
+            scalarField projDist = acap.patch().nf() & acap.patch().delta();
+            scalarField diff = projDist-(1/acap.patch().deltaCoeffs());
+
+            RDFbf[patchi] = projDist*cos(theta)
+                         +  RDFbf[patchi].patchInternalField();
 
         }
     }

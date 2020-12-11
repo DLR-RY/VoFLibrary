@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019-2019 DLR
+                            | Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 
 License
@@ -23,73 +23,106 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Class
-    Foam::polyDegree1
+    Foam::implicitFunctions::sphereImplicitFunction
 
 Description
-    first degree polynominal function
-
-    c0 + c1*x + c2*y + c3*z 
+    Creates a sphere
 
     Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    polyDegree1.C
+    sphereImplicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef polyDegree1_H
-#define polyDegree1_H
+#ifndef implicitFunction_sphereImplicitFunction_H
+#define implicitFunction_sphereImplicitFunction_H
 
+#include "implicitFunction.H"
+#include "point.H"
 
-#include "FixedList.H"
-#include "vector.H"
-#include "vector2D.H"
-#include "scalarField.H"
-
-#include "multiDimPolyFunctions.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                        Class polyDegree1 Declaration
-\*---------------------------------------------------------------------------*/
-
-class polyDegree1
-:
-    public multiDimPolyFunctions
+namespace implicitFunctions
 {
 
+/*---------------------------------------------------------------------------*\
+                   Class sphereImplicitFunction Declaration
+\*---------------------------------------------------------------------------*/
+
+class sphereImplicitFunction
+:
+    public implicitFunction
+{
+    // Private Member Data
+
+        //- Origin point
+        const point origin_;
+
+        //- Radius
+        const scalar radius_;
+
+        const scalar scale_;
 
 
-private:
-    // Private data
+    // Private Member Functions
+
+        //- No copy construct
+        sphereImplicitFunction(const sphereImplicitFunction&);
+
+        //- No copy assignment
+        void operator=(const sphereImplicitFunction&) = delete;
 
 
 public:
 
-
     //- Runtime type information
-    TypeName("polyDegree1");
+    TypeName("sphere");
+
+
     // Constructors
 
-    //- Construct from nTerms
-    polyDegree1(const Vector<label> dirs);
+        //- Construct from components
+        sphereImplicitFunction
+        (
+            const point&,
+            const scalar radius,
+            const scalar scale
+        );
 
-    //virtual ~polyDegree1();
+        //- Construct from dictionary
+        sphereImplicitFunction(const dictionary& dict);
 
-    virtual scalar value(const vector& vec);
+    //- Destructor
+    virtual ~sphereImplicitFunction() = default;
 
-    virtual const scalarField& termValues(const vector& vec);
 
+    // Member Functions
+
+        virtual scalar value(const vector& p) const
+        {
+            return (-mag(p - origin_) + radius_)*scale_;
+        }
+
+        virtual vector grad(const vector& p) const
+        {
+            return (origin_ - p)*scale_;
+        }
+
+        virtual scalar distanceToSurfaces(const vector& p) const
+        {
+            return mag(mag(p-origin_) - radius_)*scale_;
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace implicitFunctions
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

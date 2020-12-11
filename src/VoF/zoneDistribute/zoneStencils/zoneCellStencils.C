@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -36,7 +42,7 @@ namespace Foam
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneCellStencils::nonEmptyFacesPatch() const
 {
-    const polyBoundaryMesh& patches = mesh_.boundaryMesh();
+    const polyBoundaryMesh& patches = meshRef_.boundaryMesh();
 
     label nNonEmpty = 0;
 
@@ -67,17 +73,17 @@ Foam::zoneCellStencils::nonEmptyFacesPatch() const
     (
         IndirectList<face>
         (
-            mesh_.faces(),
+            meshRef_.faces(),
             nonEmptyFaces
         ),
-        mesh_.points()
+        meshRef_.points()
     );
 }
 
 Foam::autoPtr<Foam::indirectPrimitivePatch>
 Foam::zoneCellStencils::allCoupledFacesPatch() const
 {
-    const polyBoundaryMesh& patches = mesh_.boundaryMesh();
+    const polyBoundaryMesh& patches = meshRef_.boundaryMesh();
 
     label nCoupled = 0;
 
@@ -108,18 +114,18 @@ Foam::zoneCellStencils::allCoupledFacesPatch() const
     (
         IndirectList<face>
         (
-            mesh_.faces(),
+            meshRef_.faces(),
             coupledFaces
         ),
-        mesh_.points()
+        meshRef_.points()
     );
 }
 
 void Foam::zoneCellStencils::validBoundaryFaces(boolList& isValidBFace) const
 {
-    const polyBoundaryMesh& patches = mesh_.boundaryMesh();
+    const polyBoundaryMesh& patches = meshRef_.boundaryMesh();
 
-    isValidBFace.setSize(mesh_.nFaces()-mesh_.nInternalFaces());
+    isValidBFace.setSize(meshRef_.nFaces()-meshRef_.nInternalFaces());
 
     isValidBFace = true;
 
@@ -127,7 +133,7 @@ void Foam::zoneCellStencils::validBoundaryFaces(boolList& isValidBFace) const
     {
         if (pp.coupled() || isA<emptyPolyPatch>(pp))
         {
-            label bFacei = pp.start()-mesh_.nInternalFaces();
+            label bFacei = pp.start()-meshRef_.nInternalFaces();
             forAll(pp, i)
             {
                 isValidBFace[bFacei++] = false;
@@ -200,8 +206,8 @@ void Foam::zoneCellStencils::insertFaceCells
     labelHashSet& globals
 ) const
 {
-    const labelList& own = mesh_.faceOwner();
-    const labelList& nei = mesh_.faceNeighbour();
+    const labelList& own = meshRef_.faceOwner();
+    const labelList& nei = meshRef_.faceNeighbour();
 
     forAll(faceLabels, i)
     {
@@ -213,7 +219,7 @@ void Foam::zoneCellStencils::insertFaceCells
             globals.insert(globalOwn);
         }
 
-        if (mesh_.isInternalFace(facei))
+        if (meshRef_.isInternalFace(facei))
         {
             label globalNei = globalNumbering().toGlobal(nei[facei]);
             if (globalNei != exclude0 && globalNei != exclude1)
@@ -223,13 +229,13 @@ void Foam::zoneCellStencils::insertFaceCells
         }
         else
         {
-            label bFacei = facei-mesh_.nInternalFaces();
+            label bFacei = facei-meshRef_.nInternalFaces();
 
             if (isValidBFace[bFacei])
             {
                 label globalI = globalNumbering().toGlobal
                 (
-                    mesh_.nCells()
+                    meshRef_.nCells()
                 + bFacei
                 );
 
@@ -271,30 +277,12 @@ Foam::labelList Foam::zoneCellStencils::calcFaceCells
 
 Foam::zoneCellStencils::zoneCellStencils(const fvMesh& mesh)
 :
-    MeshObject<fvMesh, Foam::UpdateableMeshObject, zoneCellStencils>(mesh),
     labelListList(mesh.nCells()),
-    mesh_(mesh),
+    meshRef_(mesh),
     needComm_(),
-    globalNumbering_(mesh_.nCells()+mesh_.nFaces()-mesh_.nInternalFaces())
+    globalNumbering_(meshRef_.nCells()+meshRef_.nFaces()-meshRef_.nInternalFaces())
 {
 
-}
-
-
-void Foam::zoneCellStencils::updateMesh(const mapPolyMesh& mpm)
-{
-    if(mesh_.topoChanging())
-    { 
-        globalNumbering_ = globalIndex
-        (
-            mesh_.nCells()
-            + mesh_.nFaces()
-            - mesh_.nInternalFaces()
-        );
-        labelListList& stencil = *this;
-        stencil = labelListList(mesh_.nCells());
-        needComm_.clear();
-    } 
 }
 
 

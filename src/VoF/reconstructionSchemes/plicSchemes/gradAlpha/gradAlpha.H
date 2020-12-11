@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -19,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::gradAlpha
+    Foam::reconstruction::gradAlpha
 
 Description
     Reconstructs an interface (centre and normal vector) consisting of planes
@@ -27,8 +33,7 @@ Description
     are estimated by least square gradient scheme on the VoF Field (alpha).
     Also known as Young method
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     gradAlpha.C
@@ -43,12 +48,8 @@ SourceFiles
 #include "volFields.H"
 #include "dimensionedScalar.H"
 #include "autoPtr.H"
-
-
 #include "surfaceIteratorPLIC.H"
 #include "zoneDistribute.H"
-
-
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -59,14 +60,14 @@ namespace reconstruction
 {
 
 /*---------------------------------------------------------------------------*\
-                Class gradAlpha Declaration
+                          Class gradAlpha Declaration
 \*---------------------------------------------------------------------------*/
 
 class gradAlpha
-    : public reconstructionSchemes
+:
+    public reconstructionSchemes
 {
-
-private:
+    // Private data
 
         //- Reference to mesh
         const fvMesh& mesh_;
@@ -75,37 +76,29 @@ private:
         DynamicField<vector> interfaceNormal_;
 
 
-
-
     // Switches and tolerances. Tolerances need to go into toleranceSwitches
 
-
         //- Tolerance for search of isoFace giving specified VOF value
-        scalar vof2IsoTol_;
+        scalar isoFaceTol_;
 
         //- Tolerance for marking of surface cells:
         //  Those with surfCellTol_ < alpha1 < 1 - surfCellTol_
         scalar surfCellTol_;
 
-        // provides stencil and map
-        zoneDistribute& exchangeFields_;
-
-        //- surfaceIterator finds the plane centre for specified VOF value
+        //- SurfaceIterator finds the plane centre for specified VOF value
         surfaceIteratorPLIC sIterPLIC_;
 
+        //- Compute gradient at the surfaces
         void gradSurf(const volScalarField& phi);
-
-
 
 
     // Private Member Functions
 
-        //- Disallow copy construct
-        gradAlpha(const gradAlpha&);
+        //- No copy construct
+        gradAlpha(const gradAlpha&) = delete;
 
-        //- Disallow default bitwise assignment
-        void operator=(const gradAlpha&);
-
+        //- No bitwise assignment
+        void operator=(const gradAlpha&) = delete;
 
 
 public:
@@ -113,32 +106,32 @@ public:
     //- Runtime type information
     TypeName("gradAlpha");
 
-
-    // Constructors
-
-        //- Construct from components
-        gradAlpha
-        (
-            volScalarField& alpha1,
-            const surfaceScalarField& phi,
-            const volVectorField& U,
-            dictionary& dict
-        );
-
+    //- Construct from components
+    gradAlpha
+    (
+        volScalarField& alpha1,
+        const surfaceScalarField& phi,
+        const volVectorField& U,
+        const dictionary& dict
+    );
 
     //- Destructor
-    virtual ~gradAlpha();
-
-    // reconstruct  interface
-    virtual void reconstruct();
+    virtual ~gradAlpha() = default;
 
 
+    // Member Functions
+
+        //- Reconstruct interface
+        virtual void reconstruct(bool forceUpdate = true);
+
+        //- map VoF Field in case of refinement
+        virtual void mapAlphaField() const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End reconstructionSchemes Foam
+} // End namespace reconstruction
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

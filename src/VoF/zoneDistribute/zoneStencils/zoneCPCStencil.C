@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -122,13 +128,38 @@ void Foam::zoneCPCStencil::calcPointBoundaryData
 
 Foam::zoneCPCStencil::zoneCPCStencil(const fvMesh& mesh)
 :
+    MeshObject<fvMesh, Foam::TopologicalMeshObject, zoneCPCStencil>(mesh),
     zoneCellStencils(mesh),
     nonEmptyBoundaryPoints_(nonEmptyFacesPatch()().meshPoints()),
     uptodate_(mesh.nCells(),false)
 {
     // Mark boundary faces to be included in stencil (i.e. not coupled or empty)
     validBoundaryFaces(isValidBFace_);
-    //setSize(mesh_.nCells());
+}
+
+Foam::zoneCPCStencil& Foam::zoneCPCStencil::New(const fvMesh& mesh)
+{
+    bool found = mesh.thisDb().foundObject<zoneCPCStencil>
+    (
+        zoneCPCStencil::typeName
+    );
+    zoneCPCStencil* ptr = nullptr;
+
+    if(found)
+    {
+        ptr = mesh.thisDb().getObjectPtr<zoneCPCStencil>
+        (
+            zoneCPCStencil::typeName
+        );
+
+        return *ptr;
+    }
+
+    zoneCPCStencil* objectPtr = new zoneCPCStencil(mesh);
+
+    regIOobject::store(static_cast<zoneCPCStencil*>(objectPtr));
+
+    return *objectPtr;
 }
 
 
@@ -221,7 +252,7 @@ void Foam::zoneCPCStencil::calculateStencil
                     merge
                     (
                         globalNumbering().toGlobal(celli),
-                        pCells, // here is the error is not in global addressing
+                        pCells,
                         globalCellCells[celli]
                     );
                 }
@@ -235,19 +266,19 @@ void Foam::zoneCPCStencil::calculateStencil
 
 }
 
-void Foam::zoneCPCStencil::updateMesh(const mapPolyMesh& mpm)
-{
-    if(mesh_.topoChanging())
-    { 
-        // resize map and globalIndex
-        zoneCellStencils::updateMesh(mpm);
+// void Foam::zoneCPCStencil::updateMesh(const mapPolyMesh& mpm)
+// {
+//     if(mesh_.topoChanging())
+//     { 
+//         // resize map and globalIndex
+//         zoneCellStencils::updateMesh(mpm);
         
-        nonEmptyBoundaryPoints_ = nonEmptyFacesPatch()().meshPoints();
-        uptodate_.resize(mesh_.nCells());
-        uptodate_ = false;
-        validBoundaryFaces(isValidBFace_);
-    } 
+//         nonEmptyBoundaryPoints_ = nonEmptyFacesPatch()().meshPoints();
+//         uptodate_.resize(mesh_.nCells());
+//         uptodate_ = false;
+//         validBoundaryFaces(isValidBFace_);
+//     } 
 
-}
+// }
 
 // ************************************************************************* //

@@ -67,6 +67,12 @@ int main(int argc, char *argv[])
         " adaptive re-meshing."
     );
 
+    Foam::argList::addBoolOption
+    (
+        "overwrite",
+        "Update and overwrite the existing mesh useful for adaptive mesh refinement"
+    );
+
     #include "postProcess.H"
 
     #include "setRootCaseLists.H"
@@ -78,6 +84,8 @@ int main(int argc, char *argv[])
     #include "createUf.H"
     #include "CourantNo.H"
     #include "setInitialDeltaT.H"
+
+    const bool overwrite = args.found("overwrite");
 
     volScalarField& p = mixture.p();
     volScalarField& T = mixture.T();
@@ -99,9 +107,14 @@ int main(int argc, char *argv[])
         #include "CourantNo.H"
         #include "alphaCourantNo.H"
         #include "setDeltaT.H"
- 
 
         ++runTime;
+
+        if(overwrite)
+        {
+            runTime.setTime(runTime.value() - runTime.deltaTValue(), 1);
+            runTime.writeAndEnd();
+        }
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
@@ -119,9 +132,14 @@ int main(int argc, char *argv[])
                 if (mesh.changing())
                 {
                     MRF.update();
-                    
+
                     advector->surf().mapAlphaField();
+                    alpha2 = 1.0 - alpha1;
+                    alpha2.correctBoundaryConditions();
                     rho == alpha1*rho1 + alpha2*rho2;
+                    rho.correctBoundaryConditions();
+                    rho.oldTime() = rho;
+                    alpha2.oldTime() = alpha2;
 
                     Info<< "Execution time for mesh.update() = "
                         << runTime.elapsedCpuTime() - timeBeforeMeshUpdate
@@ -151,8 +169,15 @@ int main(int argc, char *argv[])
                 }
             }
 
+            if(overwrite)
+            {
+                continue;
+            }
+
             #include "alphaControls.H"
             #include "compressibleAlphaEqnSubCycle.H"
+
+            mixture.correct();
 
             turbulence.correctPhasePhi();
 

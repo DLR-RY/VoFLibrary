@@ -23,10 +23,10 @@ solvers
         nAlphaSubCycles 1;
         cAlpha          1;
 
-	advectionScheme isoAdvector;
-	reconstructionSchemes plicRDF;
+	advectionScheme isoAdvection;
+	reconstructionScheme plicRDF;
     interpolateNormal INTERPOL;
-    
+
 	vof2IsoTol 1e-8;
 	surfCellTol 1e-8;
 	writeVTK true;

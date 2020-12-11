@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -24,8 +30,7 @@ Class
 Description
     Fit a polynominal function with the help of multiDimPolyFunction
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     multiDimPolyFitter.C
@@ -47,25 +52,20 @@ namespace Foam
 /*---------------------------------------------------------------------------*\
                         Class multiDimPolyFitter Declaration
 \*---------------------------------------------------------------------------*/
+
 template<class T>
 class multiDimPolyFitter
 {
-
-
-
-private:
     // Private data
 
-    //- Mesh whose cells and faces to cut at their intersection with an
-    //  isosurface.
-    autoPtr<multiDimPolyFunctions> polyFunc_;
+        //- Mesh whose cells and faces to cut at their intersection with an
+        //-  isosurface.
+        autoPtr<multiDimPolyFunctions> polyFunc_;
 
-    simpleMatrix<T> A_;
+        simpleMatrix<T> A_;
 
 
 public:
-
-    // Constructors
 
     //- Construct from number of terms
     multiDimPolyFitter
@@ -76,12 +76,10 @@ public:
 
     void resetMatrix();
 
-    label nCoeffs()
+    label nCoeffs() const
     {
         return A_.n();
-    } 
-
-    
+    }
 
     void fillMatrix
     (
@@ -102,14 +100,14 @@ public:
         scalarSymmetricSquareMatrix& A
     );
 
-    // fit data
+    //- Fit data
     Field<T> fitData
     (
         const List<scalarField>& listPolyTerms,
         const List<T>& listValue
     );
 
-    // fit data
+    //- Fit data
     Field<T> fitData
     (
         const List<scalarField>& listPolyTerms,
@@ -117,27 +115,27 @@ public:
         const List<scalar>& listWeight
     );
 
-    // computer inverse
+    //- Compute inverse
     scalarSymmetricSquareMatrix computeInverse
     (
         const List<scalarField>& listPolyTerms
     );
 
-    // computer inverse
+    //- Compute source
     Field<T> computeMatrixSource
     (
         const List<scalarField>& listPolyTerms,
         const List<T>& listValue
     );
 
-    // fit data
+    //- Fit data
     Field<T> fitData
     (
         const List<vector>& positions,
         const List<T>& listValue
     );
 
-        // fit data
+    //- Fit data
     Field<T> fitData
     (
         const List<vector>& positions,
@@ -145,19 +143,18 @@ public:
         const List<scalar>& listWeight
     );
 
-    // compute inverse
+    //- Compute inverse
     scalarSymmetricSquareMatrix computeInverse
     (
         const List<vector>& positions
     );
 
-    // computer inverse
+    //- Compute source
     Field<T> computeMatrixSource
     (
         const List<vector>& positions,
         const List<T>& listValue
     );
-
 };
 
 

@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,63 +26,45 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "impSphere.H"
+#include "paraboloidImplicitFunction.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    namespace implicitFunction
+    namespace implicitFunctions
     {
-        defineTypeNameAndDebug(impSphere, 0);
-        addToRunTimeSelectionTable(implicitFunctions, impSphere, dict);
+        defineTypeNameAndDebug(paraboloidImplicitFunction, 0);
+        addToRunTimeSelectionTable
+        (
+            implicitFunction,
+            paraboloidImplicitFunction,
+            dict
+        );
     }
 
 }
 
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunction::impSphere::impSphere
+Foam::implicitFunctions::paraboloidImplicitFunction::paraboloidImplicitFunction
 (
-    const point& centre,
-    const scalar radius,
-    const scalar scale
+    const vector& coeffs
 )
 :
-    centre_(centre),
-    radius_(radius),
-    scale_(scale)
-{
-
-}
+    coeffs_(coeffs)
+{}
 
 
-Foam::implicitFunction::impSphere::impSphere
+Foam::implicitFunctions::paraboloidImplicitFunction::paraboloidImplicitFunction
 (
     const dictionary& dict
 )
 :
-    centre_(dict.lookup("centre")),
-    radius_(readScalar(dict.lookup("radius"))),
-    scale_(dict.lookupOrDefault<scalar>("scale",1))
-{
-
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunction::impSphere::~impSphere()
+    coeffs_(dict.get<vector>("coeffs"))
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
 // ************************************************************************* //

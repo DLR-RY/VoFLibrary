@@ -23,8 +23,8 @@ solvers
         nAlphaSubCycles 1;
         cAlpha          1;
 
-	advectionScheme isoAdvector;
-	reconstructionSchemes RECONSCHEME;
+	advectionScheme isoAdvection;
+	reconstructionSchemeRECONSCHEME;
 
 	iterations 4;
 

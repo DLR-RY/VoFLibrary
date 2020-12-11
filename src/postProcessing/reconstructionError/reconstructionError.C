@@ -2,7 +2,7 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
+    This file is part of the VoFLibrary source code library, which is an
 	unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 
 #include "reconstructionSchemes.H"
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 
 
 
@@ -104,9 +104,9 @@ void Foam::reconstructionError::calcError
         LCurvInf_ = 0;
     }
 
-    Foam::autoPtr<Foam::implicitFunctions> func
+    Foam::autoPtr<Foam::implicitFunction> func
     (
-        implicitFunctions::New
+        implicitFunction::New
         (
             word(dict.lookup("function")),
             dict
@@ -211,9 +211,9 @@ void Foam::reconstructionError::calcError
         LCurvInf_ = 0;
     }
 
-    Foam::autoPtr<Foam::implicitFunctions> func
+    Foam::autoPtr<Foam::implicitFunction> func
     (
-        implicitFunctions::New
+        implicitFunction::New
         (
             word(dict.lookup("function")),
             dict

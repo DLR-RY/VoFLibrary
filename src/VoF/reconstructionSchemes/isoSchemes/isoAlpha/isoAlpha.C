@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -44,7 +50,7 @@ Foam::reconstruction::isoAlpha::isoAlpha
     volScalarField& alpha1,
     const surfaceScalarField& phi,
     const volVectorField& U,
-    dictionary& dict
+    const dictionary& dict
 )
 :
     reconstructionSchemes
@@ -57,112 +63,77 @@ Foam::reconstruction::isoAlpha::isoAlpha
     ),
     mesh_(alpha1.mesh()),
     // Interpolation data
-
-    vpi_(mesh_),
     ap_(mesh_.nPoints()),
 
-
     // Tolerances and solution controls
-//    vof2IsoTol_(modelDict().lookupOrAddDefault<scalar>("vof2IsoTol", 1e-8,false,false)),
-//    surfCellTol_(modelDict().lookupOrAddDefault<scalar>("surfCellTol", 1e-8,false,false))
-    vof2IsoTol_(readScalar(modelDict().lookup("vof2IsoTol" ))),
-    surfCellTol_(readScalar(modelDict().lookup("surfCellTol" ))),
+    isoFaceTol_(modelDict().lookupOrDefault<scalar>("isoFaceTol", 1e-8)),
+    surfCellTol_(modelDict().lookupOrDefault<scalar>("surfCellTol", 1e-8)),
     sIterIso_(mesh_,ap_,surfCellTol_)
-
-
-
-
 {
-  writeVTK_ =  readBool( modelDict().lookup("writeVTK" ));
-  reconstruct();
+    reconstruct();
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::reconstruction::isoAlpha::~isoAlpha()
-{}
-
-// * * * * * * * * * * * * * * Protected Access Member Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-
-// ************************************************************************* //
-void Foam::reconstruction::isoAlpha::reconstruct()
+void Foam::reconstruction::isoAlpha::reconstruct(bool forceUpdate)
 {
-    bool uptodate = alreadyReconstructed();
+    const bool uptodate = alreadyReconstructed(forceUpdate);
 
-    if(uptodate)
+    if (uptodate && !forceUpdate)
     {
         return;
     }
-    
+
     // Interpolating alpha1 cell centre values to mesh points (vertices)
     if (mesh_.topoChanging())
     {
         // Introduced resizing to cope with changing meshes
-        if(ap_.size() != mesh_.nPoints())
+        if (ap_.size() != mesh_.nPoints())
         {
             ap_.resize(mesh_.nPoints());
 
         }
-        if(interfaceCell_.size() != mesh_.nCells())
+        if (interfaceCell_.size() != mesh_.nCells())
         {
             interfaceCell_.resize(mesh_.nCells());
         }
     }
-    ap_ = vpi_.interpolate(alpha1_);
+    ap_ = volPointInterpolation::New(mesh_).interpolate(alpha1_);
 
     DynamicList< List<point> > facePts;
 
-
-
-//    vector avgCentre= vector::zero;
     interfaceLabels_.clear();
-
-
 
     forAll(alpha1_,cellI)
     {
-    //
-        if(sIterIso_.isASurfaceCell(alpha1_[cellI]))
+        if (sIterIso_.isASurfaceCell(alpha1_[cellI]))
         {
             interfaceLabels_.append(cellI);
 
-
             sIterIso_.vofCutCell
             (
-                    cellI,
-                    alpha1_[cellI],
-                    vof2IsoTol_,
-                    100
+                cellI,
+                alpha1_[cellI],
+                isoFaceTol_,
+                100
             );
 
-            if(sIterIso_.cellStatus() == 0)
+            if (sIterIso_.cellStatus() == 0)
             {
-
                 normal_[cellI] = sIterIso_.surfaceArea();
                 centre_[cellI] = sIterIso_.surfaceCentre();
                 if(mag(normal_[cellI]) != 0)
                 {
-                  interfaceCell_[cellI]=true;
-                //  facePts.append(sIterIso_.facePoints());
-                  if (writeVTK_ & mesh_.time().writeTime())
-                  {
-                          facePts.append(sIterIso_.facePoints());
-                  }
-
+                    interfaceCell_[cellI]=true;
                 }
                 else
                 {
                     interfaceCell_[cellI]=false;
                 }
-
-
             }
             else
             {
-
                 normal_[cellI] = vector::zero;
                 centre_[cellI] = vector::zero;
                 interfaceCell_[cellI]=false;
@@ -174,18 +145,5 @@ void Foam::reconstruction::isoAlpha::reconstruct()
             centre_[cellI] = vector::zero;
             interfaceCell_[cellI]=false;
          }
-
-
     }
-
-
-
-    if (writeVTK_ & mesh_.time().writeTime())
-    {
-        std::ostringstream os ;
-        os << "isoFaces_" << int(mesh_.time().timeIndex());
-        isoFacesToFile(facePts, os.str() , "isoFaces");
-    }
-
-
 }

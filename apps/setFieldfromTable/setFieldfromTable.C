@@ -2,7 +2,7 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
+    This file is part of the VoFLibrary source code library, which is an
 	unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ Description
 
 #include "argList.H"
 #include "Time.H"
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 
 
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
     Info<< "Reading distance function" << endl;
 
-    Foam::autoPtr<Foam::implicitFunctions> func =  implicitFunctions::New
+    Foam::autoPtr<Foam::implicitFunction> func =  implicitFunction::New
     (
            setFieldTableDict.get<word>("function"),
            setFieldTableDict
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
         {
             if(distanceField.boundaryField()[patchI].fixesValue())
             {
-                vector c = mesh.C().boundaryField()[patchI][i]; 
+                vector c = mesh.C().boundaryField()[patchI][i];
 
                 distanceField.boundaryFieldRef()[patchI][i] = func->value(c);
             }
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
         }
 
     }
-	
+
 	forAll(Field.boundaryField(), patchI)
 	{
     	forAll(Field.boundaryField()[patchI],i)

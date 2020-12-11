@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,8 +31,7 @@ Description
     computes a cell point cell stencil in a narrow band. resizes in case
     of topological change
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
     
 SourceFiles
     zoneCPCStencil.C
@@ -54,15 +59,26 @@ namespace Foam
 
 class zoneCPCStencil
 :
+    public MeshObject
+    <
+        fvMesh,
+        TopologicalMeshObject,
+        zoneCPCStencil
+    >,
     public zoneCellStencils
 {
     // Private Member Functions
+
         labelList nonEmptyBoundaryPoints_;
 
+        //- is valid boundaryface ?
+        //- non valid face are on empty, wedge and processor patches
         boolList isValidBFace_;
 
+        //- cell is already uptodate
         boolList uptodate_;
 
+        //- sync boundary points
         Map<bool> syncCouledBoundaryPoints
         (
             const boolList& zone,
@@ -78,13 +94,18 @@ class zoneCPCStencil
             Map<labelList>& neiGlobal
         ) const;
 
+        //- calculate stencil
         void calculateStencil
         (
             const boolList& zone,
             labelListList& globalCellCells
         );
 
-
+        //- No copy construct
+        zoneCPCStencil(const zoneCPCStencil&) = delete;
+  
+        //- No copy assignment
+        void operator=(const zoneCPCStencil&) = delete;
 
 public:
 
@@ -95,11 +116,16 @@ public:
         //- Construct from all cells and boundary faces
         explicit zoneCPCStencil(const fvMesh&);
 
-        //- Calculates per cell the neighbour data
-        //  (= cell or boundary in global numbering).
-        //  First element is always cell itself!
+    // Selectors
+        static zoneCPCStencil& New(const fvMesh&);
 
-        virtual void updateMesh(const mapPolyMesh& mpm);
+    //- Destructor
+       // virtual ~zoneCPCStencil() = default;
+
+        //- Calculates per cell the neighbour data
+        //-  (= cell or boundary in global numbering).
+        //-  First element is always cell itself!
+        // virtual void updateMesh(const mapPolyMesh& mpm);
 
 };
 

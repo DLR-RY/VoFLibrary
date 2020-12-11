@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -40,10 +48,9 @@ Description
         doi 10.1016/j.jcp.2019.01.009
 
     \endverbatim
-    
-Author
-    Johan Roenby, DHI, all rights reserved.
-    Modifications: Henning Scheufler, DLR, all rights reserved.
+
+
+    Original code supplied by Johan Roenby, DHI (2016)
 
 SourceFiles
     cutCellIso.C
@@ -67,7 +74,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class cutCellIso Declaration
+                         Class cutCellIso Declaration
 \*---------------------------------------------------------------------------*/
 
 class cutCellIso
@@ -86,7 +93,7 @@ class cutCellIso
         //- Isofunction values at mesh points. f_size() = mesh_.nPoints().
         scalarField& f_;
 
-        //- Isovalue used to cut cell
+        //- Cutvalue used to cut cell
         scalar cutValue_;
 
         //- An cutFaceIso object to get access to its face cutting functionality
@@ -123,52 +130,52 @@ class cutCellIso
 
         //- A cell status label taking one of the values:
         //
-        //  - -1: cell is fully below the isosurface
-        //  -  0: cell is cut
-        //  - +1: cell is fully above the isosurface
+        //   -1: cell is fully below the isosurface
+        //    0: cell is cut
+        //   +1: cell is fully above the isosurface
         label cellStatus_;
 
-    // Private Member Functions
 
   public:
+
     // Constructors
 
         //- Construct from fvMesh and a scalarField
         //  Length of scalarField should equal number of mesh points
         cutCellIso(const fvMesh&, scalarField& f);
 
-        // Member functions
 
-        //- sets internal values and returns face status
+    // Member functions
+
+        //- Sets internal values and returns face status
         label calcSubCell(const label& cellI, const scalar cutValue);
 
-        //- returns subCellCentre
-        point subCellCentre();
+        //- Returns subCellCentre
+        const point& subCellCentre() const;
 
-        //- returns subCellVolume
-        scalar subCellVolume();
+        //- Returns subCellVolume
+        scalar subCellVolume() const;
 
-        //- returns the points of the cutting isoface
-        DynamicList<point> facePoints();
+        //- Returns the points of the cutting isoface
+        const DynamicList<point>& facePoints();
 
-        //- returns the centre of the cutting isoface
-        point faceCentre();
+        //- Returns the centre of the cutting isoface
+        const point& faceCentre() const;
 
-        //- returns the area normal vector of the cutting isoface
-        vector faceArea();
+        //- Returns the area normal vector of the cutting isoface
+        const vector& faceArea() const;
 
-        //- returns cellStatus
-        label cellStatus();
+        //- Returns cellStatus
+        label cellStatus() const;
 
-        //- returns volume of fluid value
-        scalar VolumeOfFluid();
+        //- Returns volume of fluid value
+        scalar VolumeOfFluid() const;
 
-        //- returns cutValue
+        //- Returns cutValue
         scalar cutValue() const;
 
-        //- resets internal values
+        //- Resets internal values
         void clearStorage();
-
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

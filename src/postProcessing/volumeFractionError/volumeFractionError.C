@@ -2,7 +2,7 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
+    This file is part of the VoFLibrary source code library, which is an
 	unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ License
 
 #include "advectionSchemes.H"
 #include "cutCellIso.H"
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -102,9 +102,9 @@ bool Foam::functionObjects::volumeFractionError::read(const dictionary& dict)
 
 
     // set initial mass
-    Foam::autoPtr<Foam::implicitFunctions> func
+    Foam::autoPtr<Foam::implicitFunction> func
     (
-        implicitFunctions::New
+        implicitFunction::New
         (
             word(dict.lookup("function")),
             dict
@@ -120,7 +120,7 @@ bool Foam::functionObjects::volumeFractionError::read(const dictionary& dict)
     }
 
 
-     cutCellIso cutCell(mesh_,f); 
+     cutCellIso cutCell(mesh_,f);
 
     volScalarField alphaExact
     (
@@ -200,7 +200,7 @@ bool Foam::functionObjects::volumeFractionError::write()
 
     dict_.set<vector>("centre",centrePos);
 
-    Foam::autoPtr<Foam::implicitFunctions> func =  implicitFunctions::New
+    Foam::autoPtr<Foam::implicitFunction> func =  implicitFunction::New
     (
            word(dict_.lookup("function")),
            dict_
@@ -213,7 +213,7 @@ bool Foam::functionObjects::volumeFractionError::write()
         f[pI] =  func->value(mesh_.points()[pI]);
     }
 
-    cutCellIso cutCell(mesh_,f); 
+    cutCellIso cutCell(mesh_,f);
 
     volScalarField alphaExact
     (

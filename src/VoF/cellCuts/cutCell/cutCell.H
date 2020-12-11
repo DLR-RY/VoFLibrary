@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,10 +33,9 @@ Description
     Base Class for cutting a cell, celli, of an fvMesh, mesh_, at its intersection
     with a surface
 
-
-Author
-    Johan Roenby, DHI, all rights reserved.
-    Modifications: Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by
+        Johan Roenby, DHI (2016)
+        Henning Scheufler, DLR (2019)
 
 
 SourceFiles
@@ -51,12 +58,11 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class cutCell Declaration
+                           Class cutCell Declaration
 \*---------------------------------------------------------------------------*/
 
 class cutCell
 {
-    private:
     // Private data
 
         //- Mesh whose cells and faces to cut at their intersection with an
@@ -64,48 +70,45 @@ class cutCell
         const fvMesh& mesh_;
 
 
+protected:
 
-    // protected Member Functions
-    protected:
+    // Protected Member Functions
 
-            //- calculates volume and centre of the cutted cell
-            void calcCellData
-            (
-                    const DynamicList<point>& cutFaceCentres,
-                    const DynamicList<vector>& cutFaceAreas,
-                    vector& subCellCentre,
-                    scalar& subCellVolume
-            );
+        //- Calculates volume and centre of the cutted cell
+        void calcCellData
+        (
+            const DynamicList<point>& cutFaceCentres,
+            const DynamicList<vector>& cutFaceAreas,
+            vector& subCellCentre,
+            scalar& subCellVolume
+        );
 
-            //- calculates area and centre of the cutting face
-            void calcGeomDataCutFace
-            (
-                    const DynamicList<DynamicList<point> >& faceEdges,
-                    const vector& subCellCentre,
-                    vector& faceArea,
-                    vector& faceCentre  
-            );
+        //- Calculates area and centre of the cutting face
+        void calcGeomDataCutFace
+        (
+            const DynamicList<DynamicList<point> >& faceEdges,
+            const vector& subCellCentre,
+            vector& faceArea,
+            vector& faceCentre
+        );
 
-            //- calculates the point of the cutting face
-            void calcIsoFacePointsFromEdges
-            (
-                    const vector&  faceArea,
-                    const vector&  faceCentre,
-                    const DynamicList<DynamicList<point> > & faceEdges,
-                    DynamicList<point>& facePoints
-            );
+        //- Calculates the point of the cutting face
+        void calcIsoFacePointsFromEdges
+        (
+            const vector& faceArea,
+            const vector& faceCentre,
+            const DynamicList<DynamicList<point>> & faceEdges,
+            DynamicList<point>& facePoints
+        );
 
+public:
 
-    public:
+    //- Construct from fvMesh
+    cutCell(const fvMesh&);
 
-    // Constructors
-
-        //- Construct from fvMesh
-        cutCell(const fvMesh&);
-
-
-    // Member functions
-
+    // Static data
+  
+    static int debug;
 };
 
 

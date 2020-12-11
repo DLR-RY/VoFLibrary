@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -27,10 +33,9 @@ Description
     required values in global addressing. Also holds a reference to the stencil
     Before the data transfer the communation has to be set up:
     exchangeFields_.setUpCommforZone(interfaceCell_); 
-    Is used in the plicRDF and isoRDF
+    Is used in the plicRDF
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
     zoneDistribute.C
@@ -62,10 +67,9 @@ class zoneDistribute
 :   public MeshObject
     <
         fvMesh,
-        UpdateableMeshObject,
+        TopologicalMeshObject,
         zoneDistribute
     >
-//:   public IOobject
 {
 
   private:
@@ -93,18 +97,20 @@ class zoneDistribute
     };
 
         //- Reference to mesh
-        const fvMesh& mesh_;
+        // const fvMesh& mesh_;
 
-        // cell-point-cell stencil elements are in global addressing
-        zoneCPCStencil stencil_;
-
-        // Private Member Functions
+        //- labels of the points on coupled patches
         labelList coupledBoundaryPoints_;
 
+        //- storage of the addressing for processor-to-processor comms
         List< labelHashSet > send_;
 
         //- Return patch of all coupled faces.
         autoPtr<indirectPrimitivePatch> coupledFacesPatch() const;
+
+        zoneCPCStencil& stencil_;
+
+        const globalIndex& gblIdx_;
 
 
         //- gives patchNumber and patchFaceNumber for a given Geometric volume field
@@ -124,7 +130,11 @@ class zoneDistribute
             const label& localIdx
         ) const;
 
-
+        //- No copy construct
+        zoneDistribute(const zoneDistribute&) = delete;
+  
+        //- No copy assignment
+        void operator=(const zoneDistribute&) = delete;
 
   public:
     // Constructors
@@ -132,22 +142,23 @@ class zoneDistribute
         TypeName("zoneDistribute");
 
         //- Construct from fvMesh
-        zoneDistribute(const fvMesh&);
+        explicit zoneDistribute(const fvMesh&);
 
     // Selectors
         static zoneDistribute& New(const fvMesh&);
 
+    //- Destructor
+        virtual ~zoneDistribute() = default;      
+
         // Member functions
 
         //- updates the stencil with boolList the size has to match
-        // mesh.nCells()
+        //- mesh.nCells()
         void setUpCommforZone(const boolList& zone,bool updateStencil=true);
 
         //- updates the stencil with boolList the size has to match
-        // mesh.nCells()
+        //- mesh.nCells()
         void updateStencil(const boolList& zone);
-
-
 
         //- return stencil reference
         const labelListList& getStencil()
@@ -158,7 +169,7 @@ class zoneDistribute
         //- return addressing reference
         const globalIndex& globalNumbering() const
         {
-            return stencil_.globalNumbering();
+            return gblIdx_;
         } 
 
         //- gives patchNumber and patchFaceNumber for a given Geometric volume field
@@ -170,7 +181,7 @@ class zoneDistribute
             const label& gblIdx
         ) const;
 
-        //- Returns stenicl and provides a Map with globalNumbering
+        //- Returns stencil and provides a Map with globalNumbering
         template <typename Type>
         Map<Field <Type> > getFields
         (
@@ -178,7 +189,7 @@ class zoneDistribute
             const GeometricField<Type, fvPatchField, volMesh>& phi
         );
 
-        //- Returns stenicl and provides a Map with globalNumbering
+        //- Returns stencil and provides a Map with globalNumbering
         template <typename Type>
         Map< Type > getDatafromOtherProc
         (
@@ -186,18 +197,13 @@ class zoneDistribute
             const GeometricField<Type, fvPatchField, volMesh>& phi
         );
 
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        // virtual void updateMesh(const mapPolyMesh& mpm);
 
-        virtual bool movePoints()
-        {
-            // do nothing;
-            return false;
-        } 
-
-
-
-
-
+        // virtual bool movePoints()
+        // {
+        //     // do nothing;
+        //     return false;
+        // } 
 
 };
 

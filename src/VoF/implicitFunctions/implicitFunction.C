@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -20,56 +26,45 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(implicitFunctions, 0);
-    defineRunTimeSelectionTable(implicitFunctions, dict);
+    defineTypeNameAndDebug(implicitFunction, 0);
+    defineRunTimeSelectionTable(implicitFunction, dict);
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::implicitFunctions> Foam::implicitFunctions::New
+Foam::autoPtr<Foam::implicitFunction> Foam::implicitFunction::New
 (
-    const word& implicitFunctionsType,
+    const word& functionType,
     const dictionary& dict
 )
 {
-    dictConstructorTable::iterator cstrIter =
-        dictConstructorTablePtr_->find(implicitFunctionsType);
+    const auto& cstrIter = dictConstructorTablePtr_->find(functionType);
 
     if (!cstrIter.found())
     {
         FatalErrorInFunction
-            << "Unknown implicitFunctions type " << implicitFunctionsType
-            << endl << endl
-            << "Valid implicitFunctions types : " << endl
+            << "Unknown implicitFunction type " << functionType
+            << nl << nl
+            << "Valid implicitFunction types : " << nl
             << dictConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<implicitFunctions>(cstrIter()( dict));
+    return autoPtr<implicitFunction>(cstrIter()(dict));
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::implicitFunctions::implicitFunctions()
+Foam::implicitFunction::implicitFunction()
 {}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::implicitFunctions::~implicitFunctions()
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 
 
 // ************************************************************************* //

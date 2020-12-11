@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,7 +25,7 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Class
     Foam::cutCellPLIC
 
@@ -36,8 +44,8 @@ Description
 
     \endverbatim
 
-Author
-    Henning Scheufler, DLR, all rights reserved.
+
+    Original code supplied by Henning Scheufler, DLR (2019)
 
 
 SourceFiles
@@ -78,10 +86,10 @@ class cutCellPLIC
         //- Cell to cut
         label cellI_;
 
-        //- Isovalue used to cut cell
+        //- Normal of the cutting plane
         vector normal_;
 
-        //- Isovalue used to cut cell
+        //- Cutvalue used to cut cell
         scalar cutValue_;
 
         //- An cutFacePLIC object to get access to its face cutting functionality
@@ -90,19 +98,19 @@ class cutCellPLIC
         //- List of face centres for CutFaces
         DynamicList<point> cutFaceCentres_;
 
-        //- List of face area vectors for isoCutFaces
+        //- List of face area vectors for PLICCutFaces
         DynamicList<vector> cutFaceAreas_;
 
-        //- Storage for subFace edges belonging to isoFace
+        //- Storage for subFace edges belonging to PLICFace
         DynamicList<DynamicList<point>> plicFaceEdges_;
 
-        //- Points constituting the cell-isosurface intersection (isoface)
+        //- Points constituting the cell-PLICsurface intersection (isoface)
         DynamicList<point> facePoints_;
 
         //- Face centre of the cutFace
         point faceCentre_;
 
-        //- Face normal of the isoface by convention pointing from high to low
+        //- Face normal of the PLICface by convention pointing from high to low
         //  values (i.e. opposite of the gradient vector).
         vector faceArea_;
 
@@ -118,23 +126,23 @@ class cutCellPLIC
 
         //- A cell status label taking one of the values:
         //
-        //  - -1: cell is fully below the isosurface
-        //  -  0: cell is cut
-        //  - +1: cell is fully above the isosurface
+        //   -1: cell is fully below the PLICsurface
+        //    0: cell is cut
+        //   +1: cell is fully above the PLICsurface
         label cellStatus_;
 
-    // Private Member Functions
 
   public:
+
     // Constructors
 
         //- Construct from fvMesh and a scalarField
-        //-  Length of scalarField should equal number of mesh points
+        //  Length of scalarField should equal number of mesh points
         cutCellPLIC(const fvMesh&);
 
-        // Member functions
+    // Member functions
 
-        //- sets internal values and returns face status
+        //- Sets internal values and returns face status
         label calcSubCell
         (
             const label& celli,
@@ -142,34 +150,34 @@ class cutCellPLIC
             const vector& normal
         );
 
-        //- returns subCellCentre
-        point subCellCentre();
+        //- Returns subCellCentre
+        const point& subCellCentre() const;
 
-        //- returns subCellVolume
-        scalar subCellVolume();
+        //- Returns subCellVolume
+        scalar subCellVolume() const;
 
-        //- returns the points of the cutting isoface
-        DynamicList<point> facePoints();
+        //- Returns the points of the cutting PLICface
+        const DynamicList<point>& facePoints();
 
-        //- returns the centre of the cutting isoface
-        point faceCentre();
+        //- Returns the centre of the cutting PLICface
+        const point& faceCentre() const;
 
-        //- returns the area normal vector of the cutting isoface
-        vector faceArea();
+        //- Returns the area normal vector of the cutting PLICface
+        const vector& faceArea() const;
 
-        //- returns cellStatus
-        label cellStatus();
+        //- Returns cellStatus
+        label cellStatus() const;
 
-        //- returns volume of fluid value
-        scalar VolumeOfFluid();
+        //- Returns volume of fluid value
+        scalar VolumeOfFluid() const;
 
-        //- returns cutValue
+        //- Returns cutValue
         scalar cutValue() const;
 
-        //- resets internal values
+        //- Resets internal values
         void clearStorage();
-
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

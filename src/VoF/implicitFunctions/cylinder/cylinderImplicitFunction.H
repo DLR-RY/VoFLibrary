@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+    \\  /    A nd           | Copyright (C) 2019 OpenCFD Ltd.
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-                            | Copyright (C) 2019-2019 DLR
+                            | Copyright (C) 2019 DLR
 -------------------------------------------------------------------------------
 
 License
@@ -25,113 +25,110 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::multiDimPolyFunctions
+    Foam::implicitFunctions::cylinderImplicitFunction
 
 Description
-    base class for polynomial functions
+    creates a infintite long cylinderImplicitFunction
 
     Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    multiDimPolyFunctions.C
+    cylinderImplicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multiDimPolyFunctions_H
-#define multiDimPolyFunctions_H
+#ifndef implicitFunction_cylinderImplicitFunction_H
+#define implicitFunction_cylinderImplicitFunction_H
 
+#include "implicitFunction.H"
+#include "point.H"
+#include "tensor.H"
 
-#include "FixedList.H"
-#include "vector.H"
-#include "vector2D.H"
-#include "scalarField.H"
-#include "runTimeSelectionTables.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                        Class multiDimPolyFunctions Declaration
-\*---------------------------------------------------------------------------*/
-
-class multiDimPolyFunctions
+namespace implicitFunctions
 {
 
-protected:
-    // Private data
+/*---------------------------------------------------------------------------*\
+                   Class cylinderImplicitFunction Declaration
+\*---------------------------------------------------------------------------*/
 
-    // number of polynominal term
-    label nTerms_;
+class cylinderImplicitFunction
+:
+    public implicitFunction
+{
+private:
 
-    scalarField coeffs_;
+    // Private Member Data
 
-    const Vector<label> geomDir_;
+        //- Origin point
+        const point origin_;
 
-    vector geomCorrection_;
+        //- Radius
+        const scalar radius_;
 
-    scalarField termValues_;
+        const scalar scale_;
 
+        vector direction_;
+
+        tensor project_;
+
+
+    // Private Member Functions
+
+        //- No copy construct
+        cylinderImplicitFunction(const cylinderImplicitFunction&) = delete;
+
+        //- No bitwise assignment
+        void operator=(const cylinderImplicitFunction&) = delete;
 
 
 public:
 
     //- Runtime type information
-    TypeName("multiDimPolyFunctions");
-
-    // Declare run-time constructor selection table
-
-    // For the dictionary constructor
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        multiDimPolyFunctions,
-        word,
-        (
-            const Vector<label> dirs
-        ),
-        (dirs)
-    );
-
-
- 
+    TypeName("cylinder");
 
 
     // Constructors
 
-    multiDimPolyFunctions(const Vector<label> dirs);
+        //- Construct from components
+        cylinderImplicitFunction
+        (
+            const point& origin,
+            const scalar radius,
+            const scalar scale,
+            const vector& direction
+        );
 
-     // Selectors
-    //- Return a reference to the selected multiDimPolyFunctions
-    static autoPtr<multiDimPolyFunctions> New
-    (
-        const word& multiDimPolyFunctionsType,
-        const Vector<label> dirs
-    );
+        //- Construct from dictionary
+        cylinderImplicitFunction(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~multiDimPolyFunctions();
+    virtual ~cylinderImplicitFunction() = default;
 
-    virtual scalar value(const vector& vec) = 0;
-
-    virtual const scalarField& termValues(const vector& vec) = 0;
-
-    label& nTerms()
+    virtual scalar value(const vector& p) const
     {
-        return nTerms_;
+        return (-mag(project_ & (p - origin_)) + radius_)*scale_;
     }
 
-    scalarField& coeffs()
+    virtual vector grad(const vector& p) const
     {
-        return coeffs_;
+        return -(project_ & (p - origin_))*scale_;
     }
 
+    virtual scalar distanceToSurfaces(const vector& p) const
+    {
+        return mag(mag(project_ & (p - origin_)) - radius_)*scale_;
+    }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace implicitFunctions
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

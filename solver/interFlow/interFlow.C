@@ -82,6 +82,12 @@ int main(int argc, char *argv[])
         "The solver is derived from interFoam"
     );
 
+    Foam::argList::addBoolOption
+    (
+        "overwrite",
+        "Update and overwrite the existing mesh useful for adaptive mesh refinement"
+    );
+
     #include "postProcess.H"
 
     #include "addCheckCaseOptions.H"
@@ -93,6 +99,8 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "initCorrectPhi.H"
     #include "createUfIfPresent.H"
+
+    const bool overwrite = args.found("overwrite");
 
     turbulence->validate();
 
@@ -111,6 +119,12 @@ int main(int argc, char *argv[])
 
         ++runTime;
 
+        if(overwrite)
+        {
+            runTime.setTime(runTime.value() - runTime.deltaTValue(), 1);
+            runTime.writeAndEnd();
+        }
+
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         // --- Pressure-velocity PIMPLE corrector loop
@@ -128,8 +142,12 @@ int main(int argc, char *argv[])
                     gh = (g & mesh.C()) - ghRef;
                     ghf = (g & mesh.Cf()) - ghRef;
                     advector->surf().mapAlphaField();
+                    alpha2 = 1.0 - alpha1;
+                    alpha2.correctBoundaryConditions();
                     rho == alpha1*rho1 + alpha2*rho2;
-                    rho.oldTime() = rho; // not sure if needed
+                    rho.correctBoundaryConditions();
+                    rho.oldTime() = rho;
+                    alpha2.oldTime() = alpha2;
 
                     MRF.update();
 
@@ -152,6 +170,11 @@ int main(int argc, char *argv[])
                         #include "meshCourantNo.H"
                     }
                 }
+            }
+
+            if(overwrite)
+            {
+                continue;
             }
 
             #include "alphaControls.H"

@@ -23,86 +23,112 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 Class
-    Foam::leastSquareGrad
+    Foam::implicitFunctions::ellipsoidImplicitFunction
 
 Description
-    Estimates the gradient with a least square scheme in a cell
+    creates an ellipsoidImplicitFunction
 
     Original code supplied by Henning Scheufler, DLR (2019)
 
 SourceFiles
-    leastSquareGrad.C
+    ellipsoidImplicitFunction.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef leastSquareGrad_H
-#define leastSquareGrad_H
+#ifndef implicitFunction_ellipsoidImplicitFunction_H
+#define implicitFunction_ellipsoidImplicitFunction_H
 
-#include "fvMesh.H"
-#include "volFields.H"
-#include "surfaceFields.H"
-#include "OFstream.H"
-
-
-
-#include "multiDimPolyFitter.H"
+#include "implicitFunction.H"
+#include "mathematicalConstants.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                        Class leastSquareGrad Declaration
-\*---------------------------------------------------------------------------*/
-template<class T>
-class leastSquareGrad
+namespace implicitFunctions
 {
 
+/*---------------------------------------------------------------------------*\
+                  Class ellipsoidImplicitFunction Declaration
+\*---------------------------------------------------------------------------*/
 
-
+class ellipsoidImplicitFunction
+:
+    public implicitFunction
+{
 private:
-    // Private data
-    multiDimPolyFitter<T> polyFitter_;
 
-    Vector<label> geomDir_;
+    // Private Member Data
 
-    label nDims_;
+        //- Axis
+        vector semiAxis_;
+
+        //- Origin point
+        vector origin_;
+
+
+    // Private Member Functions
+
+        //- No copy construct
+        ellipsoidImplicitFunction(const ellipsoidImplicitFunction&) = delete;
+
+        //- No bitwise assignment
+        void operator=(const ellipsoidImplicitFunction&) = delete;
 
 
 public:
 
+    //- Runtime type information
+    TypeName("ellipsoidImplicitFunction");
+
+
     // Constructors
 
-        //- Construct from fvMesh and globalIndex
-        leastSquareGrad(word functionName,const Vector<label> geomDir);
+        //- Construct from components
+        ellipsoidImplicitFunction(const vector& semiAxis);
+
+        //- Construct from dictionary
+        ellipsoidImplicitFunction(const dictionary& dict);
 
 
-    // Member functions
+    //- Destructor
+    virtual ~ellipsoidImplicitFunction() = default;
 
-        //- returns the gradient of the cell
-        typename outerProduct<vector, T>::type grad
+    virtual scalar value(const vector& p) const
+    {
+          return
+           -sqrt
+            (
+                sqr((p.x() - origin_.x())/semiAxis_.x())
+              + sqr((p.y() - origin_.y())/semiAxis_.y())
+              + sqr((p.z() - origin_.z())/semiAxis_.z())
+            ) + 1;
+    }
+
+    virtual vector grad(const vector& p) const
+    {
+        // normal_ has the length of one
+        return vector
         (
-            const List<vector>& positions,
-            const List<T>& listValue
+            2*(p.x() - origin_.x())/sqr(semiAxis_.x()),
+            2*(p.y() - origin_.y())/sqr(semiAxis_.y()),
+            2*(p.z() - origin_.z())/sqr(semiAxis_.z())
         );
+    }
 
-        Map<typename outerProduct<vector, T>::type > grad
-        (
-            const Map <List<vector> >& positions,
-            const Map <List<T> >& listValue
-        );
-
-
-
-
+    virtual scalar distanceToSurfaces(const vector& p) const
+    {
+        NotImplemented;
+        return GREAT;
+    }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace implicitFunctions
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

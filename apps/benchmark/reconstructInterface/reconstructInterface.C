@@ -2,7 +2,7 @@
         Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
+    This file is part of the VoFLibrary source code library, which is an
 	unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ Author:
 #include "OFstream.H"
 
 #include "reconstructionSchemes.H"
-#include "implicitFunctions.H"
+#include "implicitFunction.H"
 #include "cutCellIso.H"
 #include "reconstructionError.H"
 #include "isoCutCell.H"
@@ -50,7 +50,7 @@ void setAlpha(const fvMesh& mesh, const dictionary& initAlphaFieldDict, volScala
 {
 
 
-    Foam::autoPtr<Foam::implicitFunctions> func =  implicitFunctions::New
+    Foam::autoPtr<Foam::implicitFunction> func =  implicitFunction::New
     (
            initAlphaFieldDict.get<word>("function"),
            initAlphaFieldDict
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
     runTime.write();
 
-	
+
     Info<< "End\n" << endl;
 
     return 0;

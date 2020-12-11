@@ -2,8 +2,8 @@
             Copyright (c) 2017-2019, German Aerospace Center (DLR)
 -------------------------------------------------------------------------------
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of the VoFLibrary source code library, which is an
+    unofficial extension to OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ Foam::cartesianCS Foam::leastSquareFitParabolid::makeLocalCoordSystem
     else if(nDims_ == 2)
     {
         // very stupid solution
-        if (geomDir_.x() == -1) 
+        if (geomDir_.x() == -1)
         {
             e0 = n ^ vector(1,0,0);
         }
@@ -90,7 +90,7 @@ Foam::cartesianCS Foam::leastSquareFitParabolid::makeLocalCoordSystem
     {
         // Fatal Error
         FatalErrorInFunction
-        << "the geometric dimension is not 2D or 2D" << nl 
+        << "the geometric dimension is not 2D or 2D" << nl
         << " the dimension is: " << nDims_
         << exit(FatalError);
     }
@@ -110,7 +110,7 @@ Foam::leastSquareFitParabolid::leastSquareFitParabolid
     const Vector<label> explicitDim
 )
 :
-    polyFitter_("polyDegree2",explicitDim),
+    polyFitter_("paraboloid",explicitDim),
     geomDir_(geomDir),
     nDims_(0)
 {
@@ -127,7 +127,7 @@ Foam::leastSquareFitParabolid::leastSquareFitParabolid
     {
         // Fatal Error
         FatalErrorInFunction
-        << "the geometric dimension is not 2D or 2D" << nl 
+        << "the geometric dimension is not 2D or 2D" << nl
         << " the dimension is: " << nDims_ << nl
         << exit(FatalError);
     }
@@ -155,7 +155,7 @@ Foam::scalarField Foam::leastSquareFitParabolid::fitParaboloid
     {
         listValue[i] = localPositions[i].z();
     }
-    
+
     scalarField fitData = polyFitter_.fitData
     (
         localPositions,
@@ -185,7 +185,7 @@ Foam::scalarField Foam::leastSquareFitParabolid::fitParaboloid
     {
         listValue[i] = localPositions[i].z();
     }
-    
+
     scalarField fitData = polyFitter_.fitData
     (
         localPositions,

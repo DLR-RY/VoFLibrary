@@ -22,9 +22,9 @@ solvers
         cAlpha          1;
         nAlphaSubCycles 1;
 
-	    advectionScheme isoAdvector;
+	    advectionScheme isoAdvection;
 
-        reconstructionSchemes plicRDF;
+        reconstructionScheme plicRDF;
 
         vof2IsoTol 1e-8;
         surfCellTol 1e-8;
@@ -36,7 +36,7 @@ geoVoF
 {
 	advectionScheme advectionIso;
 
-	reconstructionSchemes isoInverseDistance; //RDFadvect
+	reconstructionScheme isoInverseDistance; //RDFadvect
 
 	//RDFadvectCoeffs
 	isoInverseDistanceCoeffs

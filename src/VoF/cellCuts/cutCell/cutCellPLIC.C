@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -46,6 +54,7 @@ Foam::cutCellPLIC::cutCellPLIC(const fvMesh& mesh)
     clearStorage();
 }
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::label Foam::cutCellPLIC::calcSubCell
@@ -68,10 +77,8 @@ Foam::label Foam::cutCellPLIC::calcSubCell
     label nFaceBelowInterface = 0;
 
     // loop over all cell faces
-    forAll(c, fi)
+    for (const label faceI : c)
     {
-        const label faceI = c[fi];
-
         const label faceStatus = cutFace_.calcSubFace(faceI, normal_, base);
 
         if (faceStatus == 0) // face is cut
@@ -111,7 +118,7 @@ Foam::label Foam::cutCellPLIC::calcSubCell
         // In the rare but occuring cases where a cell is only touched at a
         // point or a line the isoFaceArea_ will have zero length and here the
         // cell should be treated as either completely empty or full.
-        if (mag(faceArea_) < 10*SMALL)
+        if (mag(faceArea_) < ROOTVSMALL)
         {
             if (nFaceBelowInterface == 0)
             {
@@ -145,13 +152,6 @@ Foam::label Foam::cutCellPLIC::calcSubCell
             subCellVolume_
         );
 
-        // Check isoFaceArea_ direction and change if not pointing out of
-        // subcell
-        // if ((faceArea_ & (faceCentre_ - subCellCentre_)) < 0)
-        // {
-        //     faceArea_ *= (-1);
-        // }
-
         VOF_ = subCellVolume_ / mesh_.V()[cellI_];
     }
     else if (fullyAbove) // cell fully above isosurface
@@ -172,17 +172,20 @@ Foam::label Foam::cutCellPLIC::calcSubCell
     return cellStatus_;
 }
 
-Foam::point Foam::cutCellPLIC::subCellCentre()
+
+const Foam::point& Foam::cutCellPLIC::subCellCentre() const
 {
     return subCellCentre_;
 }
 
-Foam::scalar Foam::cutCellPLIC::subCellVolume()
+
+Foam::scalar Foam::cutCellPLIC::subCellVolume() const
 {
     return subCellVolume_;
 }
 
-Foam::DynamicList<Foam::point> Foam::cutCellPLIC::facePoints()
+
+const Foam::DynamicList<Foam::point>& Foam::cutCellPLIC::facePoints()
 {
     if (facePoints_.size() == 0)
     {
@@ -199,27 +202,36 @@ Foam::DynamicList<Foam::point> Foam::cutCellPLIC::facePoints()
     return facePoints_;
 }
 
-Foam::point Foam::cutCellPLIC::faceCentre()
+
+const Foam::point& Foam::cutCellPLIC::faceCentre() const
 {
     return faceCentre_;
 }
 
-Foam::vector Foam::cutCellPLIC::faceArea()
+
+const Foam::vector& Foam::cutCellPLIC::faceArea() const
 {
     return faceArea_;
 }
 
-Foam::scalar Foam::cutCellPLIC::VolumeOfFluid()
+
+Foam::scalar Foam::cutCellPLIC::VolumeOfFluid() const
 {
     return VOF_;
 }
 
-Foam::label Foam::cutCellPLIC::cellStatus()
+
+Foam::label Foam::cutCellPLIC::cellStatus() const
 {
     return cellStatus_;
 }
 
-Foam::scalar Foam::cutCellPLIC::cutValue() const { return cutValue_; }
+
+Foam::scalar Foam::cutCellPLIC::cutValue() const
+{
+    return cutValue_;
+}
+
 
 void Foam::cutCellPLIC::clearStorage()
 {

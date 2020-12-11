@@ -1,9 +1,15 @@
 /*---------------------------------------------------------------------------*\
-            Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019-2019 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                            | Copyright (C) 2019-2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -24,20 +30,19 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::surfaceIteratorPLIC::surfaceIteratorPLIC(const fvMesh& mesh,const scalar& tol)
+Foam::surfaceIteratorPLIC::surfaceIteratorPLIC
+(
+    const fvMesh& mesh,
+    const scalar tol
+)
 :
     mesh_(mesh),
     cutCell_(mesh_),
     surfCellTol_(tol)
-{
-
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-
-
 
 Foam::label Foam::surfaceIteratorPLIC::vofCutCell
 (
@@ -48,20 +53,18 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
     vector normal
 )
 {
-    if(mag(normal) == 0)
+    if (mag(normal) == 0)
     {
         WarningInFunction
             << "normal length is zero in cell: " << celli << nl
             << "try to increase to nCorrectors "
             << endl;
 
-        return sign(alpha1-0.5); // alpha1 > 0.5 =1 alpha1 > 0.5 = -1
+        return sign(alpha1-0.5);
 
     }
 
-
-    normal /= mag(normal);
-
+    normal.normalise();
 
     // Finding cell vertex extrema values
     const labelList& pLabels = mesh_.cellPoints(celli);
@@ -97,7 +100,7 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
     {
         L3 = round(0.5*(L1 + L2));
         f3 = fvert[order[L3]];
-        cutCell_.calcSubCell(celli, f3,normal);
+        cutCell_.calcSubCell(celli, f3, normal);
         a3 = cutCell_.VolumeOfFluid();
         if (a3 > alpha1)
         {
@@ -109,18 +112,18 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
         }
         else
         {
-            return cutCell_.calcSubCell(celli, f3,normal);
+            return cutCell_.calcSubCell(celli, f3, normal);
         }
     }
 
     if (mag(f1 - f2) < 10*SMALL)
     {
-        return cutCell_.calcSubCell(celli, f1,normal);
+        return cutCell_.calcSubCell(celli, f1, normal);
     }
 
     if (mag(a1 - a2) < tol)
     {
-        return cutCell_.calcSubCell(celli, 0.5*(f1 + f2),normal);
+        return cutCell_.calcSubCell(celli, 0.5*(f1 + f2), normal);
     }
     // Now we know that a(f) = alpha1 is to be found on the f interval
     // [f1, f2], i.e. alpha1 will be in the interval [a2,a1]
@@ -130,11 +133,11 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
 
     // Finding 2 additional points on 3 deg polynomial
     f3 = f1 + (f2 - f1)/3;
-    cutCell_.calcSubCell(celli, f3,normal);
+    cutCell_.calcSubCell(celli, f3, normal);
     a3 = cutCell_.VolumeOfFluid();
 
     scalar f4 = f1 + 2*(f2 - f1)/3;
-    cutCell_.calcSubCell(celli, f4,normal);
+    cutCell_.calcSubCell(celli, f4, normal);
     scalar a4 = cutCell_.VolumeOfFluid();
 
     // Building and solving Vandermonde matrix equation
@@ -173,7 +176,7 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
     f3 = f3*(f2 - f1) + f1;
 
     //Check result
-    label status = cutCell_.calcSubCell(celli, f3,normal);
+    label status = cutCell_.calcSubCell(celli, f3, normal);
     const scalar VOF = cutCell_.VolumeOfFluid();
     res = mag(VOF - alpha1);
 
@@ -201,7 +204,7 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
     while (res > tol && nIter < maxIter && g1 != g2)
     {
         x0 = (x2*g1 - x1*g2)/(g1 - g2);
-        status = cutCell_.calcSubCell(celli, x0,normal);
+        status = cutCell_.calcSubCell(celli, x0, normal);
         g0 = cutCell_.VolumeOfFluid() - alpha1;
         res = mag(g0);
         x2 = x1; g2 = g1;
@@ -209,11 +212,8 @@ Foam::label Foam::surfaceIteratorPLIC::vofCutCell
         nIter++;
     }
 
-    // if (res > tol)
-    // {
-    //     Info << "Warning: Bisection not converged " << endl;
-    // }
-    
     return status;
 }
+
+
 // ************************************************************************* //

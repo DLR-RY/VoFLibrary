@@ -1,9 +1,17 @@
 /*---------------------------------------------------------------------------*\
-    Modified work | Copyright (c) 2017-2019, German Aerospace Center (DLR)
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2016-2017 OpenCFD Ltd.
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
+                isoAdvector | Copyright (C) 2016-2017 DHI
+              Modified work | Copyright (C) 2018-2019 Johan Roenby
+              Modified work | Copyright (C) 2019 DLR
+-------------------------------------------------------------------------------
+
 License
-    This file is part of the VoFLibrary source code library, which is an 
-	unofficial extension to OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -17,11 +25,15 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-    
+
 
 \*---------------------------------------------------------------------------*/
 
 #include "cutFace.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+  
+int Foam::cutFace::debug = 0;
 
 // * * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * *
 
@@ -50,9 +62,12 @@ void Foam::cutFace::calcSubFace
 
     // loop face and append the cuts
     // loop starts at firstFullySubmergedPoint
-    for (int i = firstFullySubmergedPoint;
-         i < firstFullySubmergedPoint + f.size();
-         i++)
+    for
+    (
+        int i = firstFullySubmergedPoint;
+        i < firstFullySubmergedPoint + f.size();
+        ++i
+    )
     {
         // max two points are appended during one cycle
         label idx = i % f.size();
@@ -68,8 +83,6 @@ void Foam::cutFace::calcSubFace
             surfacePoints.append(points[f[idx]]);
         }
 
-        // if(weight[idx] < 1 && weight[idx] > 0) // cannot be 0 or 1 see above
-        // faster should be sign p1 != sign p2
         if
         (
             (pointStatus[idx] < 0 && pointStatus[nextIdx] > 0) ||
@@ -100,6 +113,7 @@ void Foam::cutFace::calcSubFace
     }
 }
 
+
 void Foam::cutFace::calcSubFace
 (
     const label& faceI,
@@ -126,9 +140,12 @@ void Foam::cutFace::calcSubFace
 
     // loop face and append the cuts
     // loop starts at firstFullySubmergedPoint
-    for (int i = firstFullySubmergedPoint;
-         i < firstFullySubmergedPoint + f.size();
-         i++)
+    for
+    (
+        int i = firstFullySubmergedPoint;
+        i < firstFullySubmergedPoint + f.size();
+      ++i
+    )
     {
         // max two points are appended during one cycle
         label idx = i % f.size();
@@ -144,8 +161,6 @@ void Foam::cutFace::calcSubFace
             surfacePoints.append(points[f[idx]]);
         }
 
-        // if(weight[idx] < 1 && weight[idx] > 0) // cannot be 0 or 1 see above
-        // faster should be sign p1 != sign p2
         if
         (
             (pointStatus[idx] < 0 && pointStatus[nextIdx] > 0) ||
@@ -154,9 +169,6 @@ void Foam::cutFace::calcSubFace
         {
             label nextP = f.nextLabel(idx);
             vector dir = points[nextP] - points[f[idx]];
-//            scalar weight =
-//                (0.0 - pointStatus[idx]) /
-//                (pointStatus[nextIdx] - pointStatus[idx]); // cutValue is zero
 
             point p = points[f[idx]] + weights[idx] * dir;
 
@@ -176,6 +188,7 @@ void Foam::cutFace::calcSubFace
     }
 }
 
+
 void Foam::cutFace::calcSubFace
 (
     const face& f,
@@ -187,9 +200,8 @@ void Foam::cutFace::calcSubFace
     label& faceStatus,
     vector& subFaceCentre,
     vector& subFaceArea
- )
+)
 {
-
     if (firstFullySubmergedPoint == -1) // in Gas
     {
         faceStatus = 1;
@@ -199,9 +211,12 @@ void Foam::cutFace::calcSubFace
     }
 
     // loop face and append the cuts
-    for (int i = firstFullySubmergedPoint;
-         i < firstFullySubmergedPoint + f.size();
-         i++)
+    for
+    (
+        int i = firstFullySubmergedPoint;
+        i < firstFullySubmergedPoint + f.size();
+        ++i
+    )
     {
         // max two points are appended during one cycle
         label idx = i % f.size();
@@ -217,7 +232,6 @@ void Foam::cutFace::calcSubFace
             surfacePoints.append(points[f[idx]]);
         }
 
-        // if(weight[idx] < 1 && weight[idx] > 0) // cannot be 0 or 1 see above
         if
         (
             (pointStatus[idx] < 0 && pointStatus[nextIdx] > 0) ||
@@ -247,6 +261,7 @@ void Foam::cutFace::calcSubFace
         faceStatus = -1;
     }
 }
+
 
 void Foam::cutFace::calcSubFaceCentreAndArea
 (
@@ -312,12 +327,13 @@ void Foam::cutFace::calcSubFaceCentreAndArea
     }
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::cutFace::cutFace(const fvMesh& mesh) : mesh_(mesh)
-{
-
-}
+Foam::cutFace::cutFace(const fvMesh& mesh)
+:
+    mesh_(mesh)
+{}
 
 
 // ************************************************************************* //
